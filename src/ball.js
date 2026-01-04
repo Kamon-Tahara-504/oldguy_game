@@ -24,6 +24,7 @@ export class Ball {
       restitution: 0.4, // バウンス係数
       friction: 0.6,    // 摩擦係数
       frictionAir: 0.01, // 空気抵抗
+      gravityScale: 0,  // 初期状態では重力を無効化
     })
 
     // エンジンに追加
@@ -45,11 +46,21 @@ export class Ball {
   }
 
   // 更新（位置を同期）
+  // 落下中はBodyの位置でGraphicsを制御、落下前はGraphicsの位置でBodyを制御
   update() {
     if (this.graphics && this.body) {
-      this.graphics.x = this.body.position.x
-      this.graphics.y = this.body.position.y
-      this.graphics.rotation = this.body.angle
+      if (this.isFalling) {
+        // 落下中：Bodyの位置をGraphicsに反映
+        this.graphics.x = this.body.position.x
+        this.graphics.y = this.body.position.y
+        this.graphics.rotation = this.body.angle
+      } else {
+        // 落下前：Graphicsの位置をBodyに反映（静的ボディとして位置を固定）
+        this.Matter.Body.setPosition(this.body, {
+          x: this.graphics.x,
+          y: this.graphics.y
+        })
+      }
     }
   }
 
