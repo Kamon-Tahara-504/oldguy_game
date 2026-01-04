@@ -144,9 +144,15 @@ export class Game {
       this.PIXI
     )
 
-    // 重力を無効化（落下させない）
-    this.Matter.Body.setStatic(this.currentBall.body, false)
-    this.Matter.Body.set(this.currentBall.body, { gravityScale: 0 })
+    // 落下していない状態を確実に設定
+    this.currentBall.isFalling = false
+    
+    // 静的ボディとして設定（物理エンジンの影響を受けない）
+    this.Matter.Body.setStatic(this.currentBall.body, true)
+    
+    // Graphicsの位置を設定（Bodyは後で同期される）
+    this.currentBall.graphics.x = startX
+    this.currentBall.graphics.y = startY
 
     // 次のレベルをランダムに決定（1-3レベル）
     this.nextBallLevel = Math.floor(Math.random() * 3) + 1
@@ -156,35 +162,49 @@ export class Game {
   onMouseDown(e) {
     // クリックで落下開始（ボールが落下していない場合のみ）
     if (this.currentBall && !this.currentBall.isFalling && !this.isGameOver) {
-      // 重力を有効化
-      this.Matter.Body.set(this.currentBall.body, { gravityScale: 1 })
-      this.currentBall.startFall()
-
-      // ボールリストに追加
-      this.balls.push(this.currentBall)
-
-      // 次のボールを生成（落下完了後に）
-      this.currentBall = null
+      this.startBallFall()
     }
   }
 
   onMouseUp(e) {
     // マウスアップでも落下開始
     if (this.currentBall && !this.currentBall.isFalling && !this.isGameOver) {
-      // 重力を有効化
-      this.Matter.Body.set(this.currentBall.body, { gravityScale: 1 })
-      this.currentBall.startFall()
-
-      // ボールリストに追加
-      this.balls.push(this.currentBall)
-
-      // 次のボールを生成（落下完了後に）
-      this.currentBall = null
+      this.startBallFall()
     }
   }
 
+  startBallFall() {
+    if (!this.currentBall || this.currentBall.isFalling || this.isGameOver) return
+
+    // Graphicsの現在位置をBodyに同期
+    const currentX = this.currentBall.graphics.x
+    const currentY = this.currentBall.graphics.y
+
+    // 静的ボディから動的ボディに変更
+    this.Matter.Body.setStatic(this.currentBall.body, false)
+    
+    // Bodyの位置をGraphicsの位置に設定
+    this.Matter.Body.setPosition(this.currentBall.body, { x: currentX, y: currentY })
+    
+    // 速度を0にリセット
+    this.Matter.Body.setVelocity(this.currentBall.body, { x: 0, y: 0 })
+    this.Matter.Body.setAngularVelocity(this.currentBall.body, 0)
+    
+    // 重力を有効化
+    this.Matter.Body.set(this.currentBall.body, { gravityScale: 1 })
+    
+    // 落下開始
+    this.currentBall.startFall()
+
+    // ボールリストに追加
+    this.balls.push(this.currentBall)
+
+    // 次のボールを生成（落下完了後に）
+    this.currentBall = null
+  }
+
   onMouseMove(e) {
-    // ボールが落下していない場合は常にマウスに追従
+    // ボールが落下していない場合は常にマウスに追従（Graphicsのみ制御）
     if (this.currentBall && !this.currentBall.isFalling && !this.isGameOver) {
       const rect = this.app.canvas.getBoundingClientRect()
       const x = e.clientX - rect.left
@@ -193,10 +213,12 @@ export class Game {
         Math.min(GAME_CONFIG.width - this.currentBall.radius, x)
       )
 
-      this.Matter.Body.setPosition(this.currentBall.body, {
-        x: xClamped,
-        y: this.currentBall.body.position.y
-      })
+      // Y座標は固定（初期位置を維持）
+      const fixedY = 50
+
+      // Graphicsの位置を直接変更（Bodyはupdate()で同期される）
+      this.currentBall.graphics.x = xClamped
+      this.currentBall.graphics.y = fixedY
     }
   }
 
@@ -324,8 +346,10 @@ export class Game {
 
   checkGameOver() {
     // 危険ラインを超えたボールがあるかチェック
+    // currentBallは判定対象外（落下前のボールは除外）
     for (const ball of this.balls) {
-      if (ball.body.position.y < GAME_CONFIG.dangerLineY) {
+      // 落下中でないボールも除外（合体処理中など）
+      if (ball.isFalling && ball.body.position.y < GAME_CONFIG.dangerLineY) {
         this.gameOver()
         return
       }
@@ -356,21 +380,25 @@ export class Game {
 
     // 現在のボールの位置を同期
     if (this.currentBall) {
+      // 落下前のボールはGraphicsの位置でBodyを制御（Ball.update()で処理）
       this.currentBall.update()
-      
-      // 落下中のボールが地面に到達し、停止したかをチェック
-      if (this.currentBall.isFalling) {
-        const body = this.currentBall.body
+    }
+    
+    // 落下が完了したボールをチェック（地面に到達して停止したか）
+    for (let i = this.balls.length - 1; i >= 0; i--) {
+      const ball = this.balls[i]
+      if (ball.isFalling && !ball.fallComplete) {
+        const body = ball.body
         const velocity = Math.abs(body.velocity.x) + Math.abs(body.velocity.y)
         
         // 速度が非常に小さい場合（ほぼ停止）、落下完了とみなす
-        if (velocity < 1 && body.position.y >= GAME_CONFIG.groundY - this.currentBall.radius - 5) {
-          this.currentBall.isFalling = false
-          // 落下完了後に次のボールを生成（一度だけ実行されるように）
-          if (!this.currentBall.fallComplete) {
-            this.currentBall.fallComplete = true
+        if (velocity < 1 && body.position.y >= GAME_CONFIG.groundY - ball.radius - 5) {
+          ball.isFalling = false
+          ball.fallComplete = true
+          
+          // 落下完了後、次のボールを生成
+          if (!this.currentBall) {
             setTimeout(() => {
-              this.currentBall = null
               this.createNextBall()
             }, 100)
           }
