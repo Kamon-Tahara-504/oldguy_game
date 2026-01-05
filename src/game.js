@@ -1,38 +1,28 @@
+// メインのGameクラス（各モジュールを統合）
+
 import { createGround, createWalls, GAME_CONFIG } from './physics.js'
 import { Renderer } from './renderer.js'
 import { InputHandler } from './inputHandler.js'
 import { BallManager } from './ballManager.js'
 import { CollisionHandler } from './collisionHandler.js'
+import { GameState } from './game/gameState.js'
+import { GameRestart } from './game/gameRestart.js'
 
 export class Game {
   constructor(app, Matter, PIXI) {
     this.app = app
     this.PIXI = PIXI
     
-    // Matter.jsは後で設定される（default exportの処理のため）
-    this.balls = []
-    this.currentBall = null
-    this.nextBallLevel = 1
-    this.nextNextBallLevel = Math.floor(Math.random() * 4) + 1 // 次の次のボールのレベル（1-4レベル）
-    this.isDragging = false
-    this.ground = null
-    this.walls = []
-    this.score = 0
-    this.isGameOver = false
-    // ハイスコアをlocalStorageから読み込み
-    this.highScore = parseInt(localStorage.getItem('oldguy_game_highscore') || '0', 10)
+    // ゲーム状態を管理
+    this.state = new GameState()
     
-    // 動的サイズを取得（後で更新されるが、初期値として設定）
+    // 動的サイズを取得
     this.gameWidth = this.app.screen.width
     this.gameHeight = this.app.screen.height
     
     // マウス位置を追跡
     this.mouseX = this.gameWidth / 2  // 初期値は中央
     this.mouseY = 50
-    
-    // ボール放出のクールダウン（1秒 = 1000ミリ秒）
-    this.lastBallDropTime = 0
-    this.ballDropCooldown = 1000 // 1秒
 
     // Matter.jsエンジンを作成
     const MatterLib = Matter.default || Matter
@@ -78,6 +68,7 @@ export class Game {
     this.inputHandler = new InputHandler(this, app)
     this.ballManager = new BallManager(this, this.engine, this.Matter, PIXI)
     this.collisionHandler = new CollisionHandler(this, this.Matter)
+    this.gameRestart = new GameRestart(this)
 
     // 地面と壁の描画
     this.renderer.initGroundAndWalls(this.walls)
@@ -99,7 +90,7 @@ export class Game {
 
     // ゲームループ
     this.app.ticker.add(() => {
-      if (!this.isGameOver) {
+      if (!this.state.isGameOver) {
         this.Matter.Engine.update(this.engine)
         this.update()
         this.checkGameOver()
@@ -110,8 +101,28 @@ export class Game {
     this.ballManager.createNextBall()
   }
 
+  // ゲッター（後方互換性のため）
+  get balls() { return this.state.balls }
+  get currentBall() { return this.state.currentBall }
+  set currentBall(value) { this.state.currentBall = value }
+  get nextBallLevel() { return this.state.nextBallLevel }
+  set nextBallLevel(value) { this.state.nextBallLevel = value }
+  get nextNextBallLevel() { return this.state.nextNextBallLevel }
+  set nextNextBallLevel(value) { this.state.nextNextBallLevel = value }
+  get isDragging() { return this.state.isDragging }
+  set isDragging(value) { this.state.isDragging = value }
+  get score() { return this.state.score }
+  set score(value) { this.state.score = value }
+  get isGameOver() { return this.state.isGameOver }
+  set isGameOver(value) { this.state.isGameOver = value }
+  get highScore() { return this.state.highScore }
+  set highScore(value) { this.state.highScore = value }
+  get lastBallDropTime() { return this.state.lastBallDropTime }
+  set lastBallDropTime(value) { this.state.lastBallDropTime = value }
+  get ballDropCooldown() { return this.state.ballDropCooldown }
+
   addScore(points) {
-    this.score += points
+    this.state.addScore(points)
     this.renderer.updateScore()
   }
 
@@ -119,7 +130,7 @@ export class Game {
     // 箱から溢れたボールがあるかチェック
     // ボールの上部（body.position.y - ball.radius）が箱の上端を超えたらゲームオーバー
     // currentBallは判定対象外（落下前のボールは箱の外にあるため除外）
-    for (const ball of this.balls) {
+    for (const ball of this.state.balls) {
       // 落下中でないボールも除外（合体処理中など）
       // 合体直後のボールも除外（位置が確定するまで）
       if (ball.isFalling && !ball.fallComplete && !ball.isMerging) {
@@ -145,71 +156,30 @@ export class Game {
   }
 
   gameOver() {
-    this.isGameOver = true
-    // ハイスコアを更新
-    if (this.score > this.highScore) {
-      this.highScore = this.score
-      localStorage.setItem('oldguy_game_highscore', this.highScore.toString())
-    }
+    this.state.onGameOver()
     this.renderer.showGameOver()
   }
 
   restart() {
-    // 既存のボールをすべて削除
-    this.balls.forEach(ball => {
-      ball.destroy()
-    })
-    this.balls = []
-    
-    // 現在のボールを削除
-    if (this.currentBall) {
-      this.currentBall.destroy()
-      this.currentBall = null
-    }
-    
-    // ゲーム状態をリセット
-    this.score = 0
-    this.isGameOver = false
-    this.nextBallLevel = 1
-    this.nextNextBallLevel = Math.floor(Math.random() * 4) + 1
-    this.lastBallDropTime = 0
-    
-    // Matter.jsエンジンの世界をクリア
-    this.Matter.World.clear(this.engine.world, false)
-    
-    // 地面と壁を再作成
-    this.ground = createGround(this.engine, this.gameConfig, this.Matter)
-    this.walls = createWalls(this.engine, this.gameConfig, this.Matter)
-    
-    // 地面と壁の描画を再初期化
-    this.renderer.initGroundAndWalls(this.walls)
-    
-    // スコア表示を更新
-    this.renderer.updateScore()
-    
-    // プレビューを更新
-    this.renderer.updatePreview()
-    
-    // 最初のボールを生成
-    this.ballManager.createNextBall()
+    this.gameRestart.restart()
   }
 
   update() {
     // すべてのボールの位置を同期
-    this.balls.forEach(ball => {
+    this.state.balls.forEach(ball => {
       ball.update()
     })
 
     // 現在のボールの位置を同期
-    if (this.currentBall) {
+    if (this.state.currentBall) {
       // 落下前のボールはGraphicsの位置でBodyを制御（Ball.update()で処理）
-      this.currentBall.update()
+      this.state.currentBall.update()
     }
     
     // 落下中のボールのfallCompleteフラグを更新（合体後のボール用）
     // 注: fallCompleteは物理エンジンの動作を妨げないフラグとして使用
     // ボールが完全に停止するまで待つ（より緩和した条件）
-    for (const ball of this.balls) {
+    for (const ball of this.state.balls) {
       if (ball.isFalling && !ball.fallComplete) {
         const body = ball.body
         const velocity = Math.abs(body.velocity.x) + Math.abs(body.velocity.y)
