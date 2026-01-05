@@ -94,6 +94,7 @@ export class CollisionHandler {
     )
     newBall.isFalling = true // 落下中フラグを設定
     newBall.isMerging = true // 合体直後フラグを設定（ゲームオーバー判定から除外）
+    newBall.fallStartTime = Date.now() // 落下開始時刻を記録（合体後のボールも落下中）
     this.game.balls.push(newBall)
 
     // 合体後のボールが既存のボールと重ならないように位置調整
@@ -129,14 +130,19 @@ export class CollisionHandler {
         const newX = newBall.body.position.x + separationX
         const newY = newBall.body.position.y + separationY
         
-        // 画面内に収まるように調整
+        // 箱の範囲内に収まるように調整
+        const boxLeft = this.game.gameConfig.boxLeft || newBall.radius
+        const boxRight = this.game.gameConfig.boxRight || (this.game.gameConfig.width - newBall.radius)
+        const boxTop = this.game.gameConfig.boxTop || newBall.radius
+        const boxBottom = this.game.gameConfig.boxBottom || this.game.gameConfig.groundY
+        
         const clampedX = Math.max(
-          newBall.radius,
-          Math.min(this.game.gameConfig.width - newBall.radius, newX)
+          boxLeft + newBall.radius,
+          Math.min(boxRight - newBall.radius, newX)
         )
         const clampedY = Math.max(
-          newBall.radius,
-          Math.min(this.game.gameConfig.groundY - newBall.radius, newY)
+          boxTop + newBall.radius,
+          Math.min(boxBottom - newBall.radius, newY)
         )
         
         this.Matter.Body.setPosition(newBall.body, {

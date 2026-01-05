@@ -10,6 +10,7 @@ export class Ball {
     this.isFalling = false
     this.isMerging = false
     this.fallComplete = false // 落下完了フラグ
+    this.fallStartTime = null // 落下開始時刻（ゲームオーバー判定の除外用）
 
     const levelData = BALL_LEVELS[level]
     if (!levelData) {
@@ -44,6 +45,7 @@ export class Ball {
   // 落下を開始
   startFall() {
     this.isFalling = true
+    this.fallStartTime = Date.now() // 落下開始時刻を記録
     // Matter.jsのエンジンレベルの重力を使用
   }
 

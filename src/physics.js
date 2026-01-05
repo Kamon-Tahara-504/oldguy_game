@@ -6,6 +6,11 @@ export const GAME_CONFIG = {
   ballRadius: 30,
   gravity: 0.4, // より軽い、ふわっとした動き
   boxTopY: 0, // 箱の上端（ボールがこれを超えたらゲームオーバー）
+  // 箱の範囲を定義（画面内に配置）
+  boxMarginLeft: 175,    // 左側のマージン（正方形に近づけるため）
+  boxMarginRight: 175,   // 右側のマージン（正方形に近づけるため）
+  boxMarginTop: 100,    // 上部のマージン（UI用）
+  // 箱の範囲は動的に計算される（game.jsで設定）
 }
 
 // ボールレベルの定義
@@ -42,21 +47,29 @@ export function createWalls(engine, config, Matter) {
   const wallThickness = 20
   const walls = []
 
-  // 左の壁
+  // 箱の範囲を取得
+  const boxLeft = config.boxLeft || config.boxMarginLeft || 20
+  const boxRight = config.boxRight || (config.width - (config.boxMarginRight || 20))
+  const boxTop = config.boxTop || (config.boxMarginTop || 100)
+  const boxBottom = config.boxBottom || config.groundY
+
+  // 左の壁（画面内の箱の左端に配置）
+  const leftWallX = boxLeft + wallThickness / 2
   const leftWall = Matter.Bodies.rectangle(
-    -wallThickness / 2,
-    config.height / 2,
+    leftWallX,
+    (boxTop + boxBottom) / 2,
     wallThickness,
-    config.height,
+    boxBottom - boxTop,
     { isStatic: true }
   )
 
-  // 右の壁
+  // 右の壁（画面内の箱の右端に配置）
+  const rightWallX = boxRight - wallThickness / 2
   const rightWall = Matter.Bodies.rectangle(
-    config.width + wallThickness / 2,
-    config.height / 2,
+    rightWallX,
+    (boxTop + boxBottom) / 2,
     wallThickness,
-    config.height,
+    boxBottom - boxTop,
     { isStatic: true }
   )
 
