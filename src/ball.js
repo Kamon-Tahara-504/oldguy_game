@@ -9,6 +9,7 @@ export class Ball {
     this.PIXI = PIXI
     this.isFalling = false
     this.isMerging = false
+    this.fallComplete = false // 落下完了フラグ
 
     const levelData = BALL_LEVELS[level]
     if (!levelData) {
@@ -21,10 +22,11 @@ export class Ball {
 
     // Matter.js Bodyを作成
     this.body = Matter.Bodies.circle(x, y, this.radius, {
-      restitution: 0.4, // バウンス係数
-      friction: 0.6,    // 摩擦係数
-      frictionAir: 0.01, // 空気抵抗
-      gravityScale: 0,  // 初期状態では重力を無効化
+      restitution: 0.2,   // バウンス係数（振動を減らすため低めに）
+      friction: 0.7,      // 摩擦係数（すべりを減らすため高めに）
+      frictionAir: 0.05,  // 空気抵抗（振動を早く止めるため高めに）
+      gravityScale: 0,    // 初期状態では重力を無効化
+      density: 0.001,     // 密度（軽く感じさせる）
     })
 
     // エンジンに追加
@@ -51,9 +53,14 @@ export class Ball {
     if (this.graphics && this.body) {
       if (this.isFalling) {
         // 落下中：Bodyの位置をGraphicsに反映
-        this.graphics.x = this.body.position.x
-        this.graphics.y = this.body.position.y
-        this.graphics.rotation = this.body.angle
+        // Bodyが存在し、位置が有効な場合のみ反映
+        if (this.body.position && 
+            !isNaN(this.body.position.x) && 
+            !isNaN(this.body.position.y)) {
+          this.graphics.x = this.body.position.x
+          this.graphics.y = this.body.position.y
+          this.graphics.rotation = this.body.angle
+        }
       } else {
         // 落下前：Graphicsの位置をBodyに反映（静的ボディとして位置を固定）
         this.Matter.Body.setPosition(this.body, {

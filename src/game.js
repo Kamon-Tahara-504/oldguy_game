@@ -18,8 +18,17 @@ export class Game {
     this.scoreText = null
     this.previewBall = null
     this.previewGraphics = null
-    this.dangerLineGraphics = null
+    this.boxTopGraphics = null
     this.isGameOver = false
+    // 動的サイズを取得（後で更新されるが、初期値として設定）
+    this.gameWidth = this.app.screen.width
+    this.gameHeight = this.app.screen.height
+    // マウス位置を追跡
+    this.mouseX = this.gameWidth / 2  // 初期値は中央
+    this.mouseY = 50
+    // ボール放出のクールダウン（2秒 = 2000ミリ秒）
+    this.lastBallDropTime = 0
+    this.ballDropCooldown = 2000 // 2秒
 
     // Matter.jsエンジンを作成
     // Matter.jsはdefault exportなので、defaultプロパティから取得する必要がある場合がある
@@ -31,24 +40,36 @@ export class Game {
     this.Matter = MatterLib
     this.engine = MatterLib.Engine.create()
     this.engine.world.gravity.y = GAME_CONFIG.gravity
+    // スリープ機能を有効化（停止したボールの物理計算を省略し、振動も抑制）
+    this.engine.enableSleeping = true
+
+    // 動的サイズの設定を作成（保存して後で使用）
+    this.gameConfig = {
+      ...GAME_CONFIG,
+      width: this.gameWidth,
+      height: this.gameHeight,
+      groundY: this.gameHeight - 50, // 地面の位置を動的に調整
+    }
 
     // 地面を作成
-    this.ground = createGround(this.engine, GAME_CONFIG, this.Matter)
+    this.ground = createGround(this.engine, this.gameConfig, this.Matter)
 
     // 壁を作成
-    this.walls = createWalls(this.engine, GAME_CONFIG, this.Matter)
+    this.walls = createWalls(this.engine, this.gameConfig, this.Matter)
 
-    // 地面を描画
+    // 箱の底面（地面）を描画
     this.groundGraphics = new this.PIXI.Graphics()
-    this.groundGraphics.beginFill(0x8b4513)
-    this.groundGraphics.drawRect(0, GAME_CONFIG.groundY - 10, GAME_CONFIG.width, 20)
+    this.groundGraphics.beginFill(0x8b4513) // 茶色
+    this.groundGraphics.lineStyle(4, 0x654321, 0.95) // 箱の境界線として明確に（太さ4px、不透明度0.95）
+    this.groundGraphics.drawRect(0, this.gameConfig.groundY - 10, this.gameConfig.width, 20)
     this.groundGraphics.endFill()
     this.app.stage.addChild(this.groundGraphics)
 
-    // 壁を描画
+    // 箱の側面（左右の壁）を描画
     this.walls.forEach((wall, index) => {
       const wallGraphics = new this.PIXI.Graphics()
-      wallGraphics.beginFill(0x654321)
+      wallGraphics.beginFill(0x654321) // 暗めの茶色
+      wallGraphics.lineStyle(4, 0x543210, 0.95) // 箱の境界線（太さ4px、不透明度0.95）
       wallGraphics.drawRect(
         wall.bounds.min.x,
         wall.bounds.min.y,
@@ -60,12 +81,12 @@ export class Game {
       this.wallGraphics.push(wallGraphics)
     })
 
-    // 危険ラインを描画
-    this.dangerLineGraphics = new this.PIXI.Graphics()
-    this.dangerLineGraphics.lineStyle(3, 0xff0000, 0.8)
-    this.dangerLineGraphics.moveTo(0, GAME_CONFIG.dangerLineY)
-    this.dangerLineGraphics.lineTo(GAME_CONFIG.width, GAME_CONFIG.dangerLineY)
-    this.app.stage.addChild(this.dangerLineGraphics)
+    // 箱の上端ラインを描画（明確な箱の境界線）
+    this.boxTopGraphics = new this.PIXI.Graphics()
+    this.boxTopGraphics.lineStyle(4, 0x654321, 0.95) // 暗めの茶色、太さ4px、不透明度0.95
+    this.boxTopGraphics.moveTo(0, this.gameConfig.boxTopY)
+    this.boxTopGraphics.lineTo(this.gameConfig.width, this.gameConfig.boxTopY)
+    this.app.stage.addChild(this.boxTopGraphics)
 
     // スコア表示
     this.scoreText = new this.PIXI.Text(`Score: ${this.score}`, {
@@ -101,8 +122,15 @@ export class Game {
       }
     })
 
-    // 最初のボールを生成
+    // 最初のボールを生成（初期マウス位置で）
     this.createNextBall()
+    
+    // マウス移動を検出してボール位置を更新（canvas外でも追跡）
+    this.app.canvas.addEventListener('mouseenter', (e) => {
+      const rect = this.app.canvas.getBoundingClientRect()
+      this.mouseX = e.clientX - rect.left
+      this.mouseY = e.clientY - rect.top
+    })
   }
 
   updatePreview() {
@@ -113,7 +141,7 @@ export class Game {
     }
 
     // 新しいプレビューを作成
-    const previewX = GAME_CONFIG.width - 80
+    const previewX = this.gameConfig.width - 80
     const previewY = 50
     const levelData = BALL_LEVELS[this.nextBallLevel]
     const previewRadius = levelData.radius * 0.6
@@ -130,8 +158,20 @@ export class Game {
 
   createNextBall() {
     if (this.currentBall) return // 既にボールが存在する場合は生成しない
+    if (this.isGameOver) return // ゲームオーバー中は生成しない
 
-    const startX = GAME_CONFIG.width / 2
+    // 現在のマウス位置を使用（最新の位置を反映）
+    const levelData = BALL_LEVELS[this.nextBallLevel]
+    const ballRadius = levelData.radius
+    // マウス位置が有効な範囲内にあることを確認
+    const clampedMouseX = Math.max(
+      ballRadius,
+      Math.min(
+        this.gameConfig.width - ballRadius,
+        this.mouseX || this.gameConfig.width / 2
+      )
+    )
+    const startX = clampedMouseX
     const startY = 50
 
     this.currentBall = new Ball(
@@ -146,6 +186,7 @@ export class Game {
 
     // 落下していない状態を確実に設定
     this.currentBall.isFalling = false
+    this.currentBall.fallComplete = false // 落下完了フラグをリセット
     
     // 静的ボディとして設定（物理エンジンの影響を受けない）
     this.Matter.Body.setStatic(this.currentBall.body, true)
@@ -160,14 +201,31 @@ export class Game {
   }
 
   onMouseDown(e) {
-    // クリックで落下開始（ボールが落下していない場合のみ）
+    // マウス位置を更新
+    const rect = this.app.canvas.getBoundingClientRect()
+    this.mouseX = e.clientX - rect.left
+    this.mouseY = e.clientY - rect.top
+    
+    // ボールが存在し、まだ落下していない場合、位置を更新
     if (this.currentBall && !this.currentBall.isFalling && !this.isGameOver) {
-      this.startBallFall()
+      const xClamped = Math.max(
+        this.currentBall.radius,
+        Math.min(this.gameConfig.width - this.currentBall.radius, this.mouseX)
+      )
+      const fixedY = 50
+      this.currentBall.graphics.x = xClamped
+      this.currentBall.graphics.y = fixedY
     }
+    // ボールの落下はonMouseUpで行う
   }
 
   onMouseUp(e) {
-    // マウスアップでも落下開始
+    // マウス位置を更新（念のため）
+    const rect = this.app.canvas.getBoundingClientRect()
+    this.mouseX = e.clientX - rect.left
+    this.mouseY = e.clientY - rect.top
+    
+    // マウスアップでも落下開始（クールダウンチェック付き）
     if (this.currentBall && !this.currentBall.isFalling && !this.isGameOver) {
       this.startBallFall()
     }
@@ -176,22 +234,44 @@ export class Game {
   startBallFall() {
     if (!this.currentBall || this.currentBall.isFalling || this.isGameOver) return
 
-    // Graphicsの現在位置をBodyに同期
+    // クールダウンチェック（2秒に1回のみ）
+    const currentTime = Date.now()
+    if (currentTime - this.lastBallDropTime < this.ballDropCooldown) {
+      return // クールダウン中は何もしない
+    }
+
+    // 最新のマウス位置でGraphicsを更新（念のため）
+    const xClamped = Math.max(
+      this.currentBall.radius,
+      Math.min(this.gameConfig.width - this.currentBall.radius, this.mouseX)
+    )
+    const fixedY = 50
+    this.currentBall.graphics.x = xClamped
+    this.currentBall.graphics.y = fixedY
+
+    // Graphicsの現在位置を取得
     const currentX = this.currentBall.graphics.x
     const currentY = this.currentBall.graphics.y
 
-    // 静的ボディから動的ボディに変更
+    // まず静的ボディから動的ボディに変更（変換時に位置がリセットされる可能性があるため）
     this.Matter.Body.setStatic(this.currentBall.body, false)
     
-    // Bodyの位置をGraphicsの位置に設定
+    // 変換後、位置を確実に設定（複数回設定して確実にする）
     this.Matter.Body.setPosition(this.currentBall.body, { x: currentX, y: currentY })
     
-    // 速度を0にリセット
+    // Bodyの速度と角速度を0にリセット
     this.Matter.Body.setVelocity(this.currentBall.body, { x: 0, y: 0 })
     this.Matter.Body.setAngularVelocity(this.currentBall.body, 0)
     
     // 重力を有効化
     this.Matter.Body.set(this.currentBall.body, { gravityScale: 1 })
+    
+    // Bodyの位置を再度設定（確実にするため）
+    this.Matter.Body.setPosition(this.currentBall.body, { x: currentX, y: currentY })
+    
+    // Bodyをスリープ状態から解除（スリープしていると動かない）
+    this.Matter.Body.set(this.currentBall.body, { sleepThreshold: Infinity })
+    this.Matter.Sleeping.set(this.currentBall.body, false)
     
     // 落下開始
     this.currentBall.startFall()
@@ -199,18 +279,29 @@ export class Game {
     // ボールリストに追加
     this.balls.push(this.currentBall)
 
-    // 次のボールを生成（落下完了後に）
+    // クールダウンタイマーを更新
+    this.lastBallDropTime = currentTime
+
+    // 現在のボールをクリア
     this.currentBall = null
+
+    // クールダウン後に次のボールを生成
+    setTimeout(() => {
+      this.createNextBall()
+    }, this.ballDropCooldown)
   }
 
   onMouseMove(e) {
+    // マウス位置を常に追跡（最新の位置を確実に保存）
+    const rect = this.app.canvas.getBoundingClientRect()
+    this.mouseX = e.clientX - rect.left
+    this.mouseY = e.clientY - rect.top
+    
     // ボールが落下していない場合は常にマウスに追従（Graphicsのみ制御）
     if (this.currentBall && !this.currentBall.isFalling && !this.isGameOver) {
-      const rect = this.app.canvas.getBoundingClientRect()
-      const x = e.clientX - rect.left
       const xClamped = Math.max(
         this.currentBall.radius,
-        Math.min(GAME_CONFIG.width - this.currentBall.radius, x)
+        Math.min(this.gameConfig.width - this.currentBall.radius, this.mouseX)
       )
 
       // Y座標は固定（初期位置を維持）
@@ -345,13 +436,18 @@ export class Game {
   }
 
   checkGameOver() {
-    // 危険ラインを超えたボールがあるかチェック
-    // currentBallは判定対象外（落下前のボールは除外）
+    // 箱から溢れたボールがあるかチェック
+    // ボールの上部（body.position.y - ball.radius）が箱の上端を超えたらゲームオーバー
+    // currentBallは判定対象外（落下前のボールは箱の外にあるため除外）
     for (const ball of this.balls) {
       // 落下中でないボールも除外（合体処理中など）
-      if (ball.isFalling && ball.body.position.y < GAME_CONFIG.dangerLineY) {
-        this.gameOver()
-        return
+      if (ball.isFalling) {
+        const ballTop = ball.body.position.y - ball.radius
+        // ボールの上部が箱の上端を超えたらゲームオーバー
+        if (ballTop < this.gameConfig.boxTopY) {
+          this.gameOver()
+          return
+        }
       }
     }
   }
@@ -367,8 +463,8 @@ export class Game {
       stroke: 0x000000,
       strokeThickness: 4,
     })
-    gameOverText.x = GAME_CONFIG.width / 2 - gameOverText.width / 2
-    gameOverText.y = GAME_CONFIG.height / 2 - gameOverText.height / 2
+    gameOverText.x = this.gameConfig.width / 2 - gameOverText.width / 2
+    gameOverText.y = this.gameConfig.height / 2 - gameOverText.height / 2
     this.app.stage.addChild(gameOverText)
   }
 
@@ -384,24 +480,18 @@ export class Game {
       this.currentBall.update()
     }
     
-    // 落下が完了したボールをチェック（地面に到達して停止したか）
-    for (let i = this.balls.length - 1; i >= 0; i--) {
-      const ball = this.balls[i]
+    // 落下中のボールのfallCompleteフラグを更新（合体後のボール用）
+    // 注: 次のボールの生成はstartBallFall()で即座に行うため、ここでの判定は簡略化
+    for (const ball of this.balls) {
       if (ball.isFalling && !ball.fallComplete) {
         const body = ball.body
         const velocity = Math.abs(body.velocity.x) + Math.abs(body.velocity.y)
+        const isGrounded = body.position.y >= this.gameConfig.groundY - ball.radius - 10
         
-        // 速度が非常に小さい場合（ほぼ停止）、落下完了とみなす
-        if (velocity < 1 && body.position.y >= GAME_CONFIG.groundY - ball.radius - 5) {
+        // 速度が非常に小さい場合（ほぼ停止）かつ地面に到達している場合、落下完了とみなす
+        if (velocity < 0.5 && isGrounded) {
           ball.isFalling = false
           ball.fallComplete = true
-          
-          // 落下完了後、次のボールを生成
-          if (!this.currentBall) {
-            setTimeout(() => {
-              this.createNextBall()
-            }, 100)
-          }
         }
       }
     }
