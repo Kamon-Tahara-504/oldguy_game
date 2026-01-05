@@ -14,8 +14,8 @@ export const GAME_CONFIG = {
 }
 
 // ボールレベルの定義
-const BASE_RADIUS = 25 // レベル1の基準サイズ
-const SIZE_MULTIPLIER = 1.5 // レベルごとの倍率（2.5から1.5に変更）
+const BASE_RADIUS = 40 // レベル1の基準サイズ
+const SIZE_MULTIPLIER = 1.4 // レベルごとの倍率（合体時に1.4倍になる）
 
 export const BALL_LEVELS = {
   1: { name: 'Baby', score: 2, color: 0xff6b9d, radius: BASE_RADIUS },

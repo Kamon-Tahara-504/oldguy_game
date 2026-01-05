@@ -53,15 +53,17 @@ export class BallManager {
     this.game.currentBall.graphics.x = startX
     this.game.currentBall.graphics.y = startY
 
-    // 次のレベルをランダムに決定（1-3レベル）
-    this.game.nextBallLevel = Math.floor(Math.random() * 3) + 1
+    // 次のボールのレベルを更新
+    // nextBallLevelをnextNextBallLevelに移動し、新しいnextNextBallLevelを決定
+    this.game.nextBallLevel = this.game.nextNextBallLevel
+    this.game.nextNextBallLevel = Math.floor(Math.random() * 4) + 1 // 次の次のボールのレベルをランダムに決定（1-4レベル）
     this.game.renderer.updatePreview()
   }
 
   startBallFall() {
     if (!this.game.currentBall || this.game.currentBall.isFalling || this.game.isGameOver) return
 
-    // クールダウンチェック（2秒に1回のみ）
+    // クールダウンチェック（1秒に1回のみ）
     const currentTime = Date.now()
     if (currentTime - this.game.lastBallDropTime < this.game.ballDropCooldown) {
       return // クールダウン中は何もしない
