@@ -1,0 +1,72 @@
+export class InputHandler {
+  constructor(game, app) {
+    this.game = game
+    this.app = app
+    
+    // マウスイベントを登録
+    this.app.canvas.addEventListener('mousedown', this.onMouseDown.bind(this))
+    this.app.canvas.addEventListener('mouseup', this.onMouseUp.bind(this))
+    this.app.canvas.addEventListener('mousemove', this.onMouseMove.bind(this))
+    
+    // マウス移動を検出してボール位置を更新（canvas外でも追跡）
+    this.app.canvas.addEventListener('mouseenter', (e) => {
+      const rect = this.app.canvas.getBoundingClientRect()
+      this.game.mouseX = e.clientX - rect.left
+      this.game.mouseY = e.clientY - rect.top
+    })
+  }
+
+  onMouseDown(e) {
+    // マウス位置を更新
+    const rect = this.app.canvas.getBoundingClientRect()
+    this.game.mouseX = e.clientX - rect.left
+    this.game.mouseY = e.clientY - rect.top
+    
+    // ボールが存在し、まだ落下していない場合、位置を更新
+    if (this.game.currentBall && !this.game.currentBall.isFalling && !this.game.isGameOver) {
+      const xClamped = Math.max(
+        this.game.currentBall.radius,
+        Math.min(this.game.gameConfig.width - this.game.currentBall.radius, this.game.mouseX)
+      )
+      const fixedY = 50
+      this.game.currentBall.graphics.x = xClamped
+      this.game.currentBall.graphics.y = fixedY
+    }
+    // ボールの落下はonMouseUpで行う
+  }
+
+  onMouseUp(e) {
+    // マウス位置を更新（念のため）
+    const rect = this.app.canvas.getBoundingClientRect()
+    this.game.mouseX = e.clientX - rect.left
+    this.game.mouseY = e.clientY - rect.top
+    
+    // マウスアップでも落下開始（クールダウンチェック付き）
+    if (this.game.currentBall && !this.game.currentBall.isFalling && !this.game.isGameOver) {
+      this.game.ballManager.startBallFall()
+    }
+  }
+
+  onMouseMove(e) {
+    // マウス位置を常に追跡（最新の位置を確実に保存）
+    const rect = this.app.canvas.getBoundingClientRect()
+    this.game.mouseX = e.clientX - rect.left
+    this.game.mouseY = e.clientY - rect.top
+    
+    // ボールが落下していない場合は常にマウスに追従（Graphicsのみ制御）
+    if (this.game.currentBall && !this.game.currentBall.isFalling && !this.game.isGameOver) {
+      const xClamped = Math.max(
+        this.game.currentBall.radius,
+        Math.min(this.game.gameConfig.width - this.game.currentBall.radius, this.game.mouseX)
+      )
+
+      // Y座標は固定（初期位置を維持）
+      const fixedY = 50
+
+      // Graphicsの位置を直接変更（Bodyはupdate()で同期される）
+      this.game.currentBall.graphics.x = xClamped
+      this.game.currentBall.graphics.y = fixedY
+    }
+  }
+}
+
