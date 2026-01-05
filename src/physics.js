@@ -4,8 +4,8 @@ export const GAME_CONFIG = {
   height: 600,
   groundY: 550,
   ballRadius: 30,
-  gravity: 0.8,
-  dangerLineY: 100, // 危険ライン（ゲームオーバー判定）
+  gravity: 0.4, // より軽い、ふわっとした動き
+  boxTopY: 0, // 箱の上端（ボールがこれを超えたらゲームオーバー）
 }
 
 // ボールレベルの定義
@@ -65,9 +65,10 @@ export function createWalls(engine, config, Matter) {
 // 円（ボール）を作成
 export function createBall(engine, x, y, radius, Matter) {
   const ball = Matter.Bodies.circle(x, y, radius, {
-    restitution: 0.4, // バウンス係数
-    friction: 0.6,    // 摩擦係数
-    frictionAir: 0.01, // 空気抵抗
+    restitution: 0.2,   // バウンス係数（振動を減らすため低めに）
+    friction: 0.7,      // 摩擦係数（すべりを減らすため高めに）
+    frictionAir: 0.05,  // 空気抵抗（振動を早く止めるため高めに）
+    density: 0.001,     // 密度（軽く感じさせる）
   })
   Matter.World.add(engine.world, ball)
   return ball

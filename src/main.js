@@ -11,17 +11,32 @@ async function init() {
     return
   }
 
+  // 画面サイズを取得
+  const getScreenSize = () => ({
+    width: window.innerWidth,
+    height: window.innerHeight
+  })
+
+  const screenSize = getScreenSize()
+
   // PixiJSアプリケーションを作成
   const app = new PIXI.Application()
   await app.init({
-    width: 800,
-    height: 600,
+    width: screenSize.width,
+    height: screenSize.height,
     backgroundColor: 0x87ceeb,
+    resizeTo: window, // ウィンドウサイズに自動リサイズ
   })
   container.appendChild(app.canvas)
 
-  // ゲームを開始
+  // ゲームを開始（動的サイズを渡す）
   new Game(app, Matter, PIXI)
+
+  // リサイズイベントに対応
+  window.addEventListener('resize', () => {
+    const newSize = getScreenSize()
+    app.renderer.resize(newSize.width, newSize.height)
+  })
 }
 
 init().catch(console.error)
