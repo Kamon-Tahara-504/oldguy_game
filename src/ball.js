@@ -22,9 +22,9 @@ export class Ball {
 
     // Matter.js Bodyを作成
     this.body = Matter.Bodies.circle(x, y, this.radius, {
-      restitution: 0.2,   // バウンス係数（振動を減らすため低めに）
-      friction: 0.7,      // 摩擦係数（すべりを減らすため高めに）
-      frictionAir: 0.05,  // 空気抵抗（振動を早く止めるため高めに）
+      restitution: 0.3,   // バウンス係数（適度な跳ね返り、振動を減らす）
+      friction: 0.5,      // 摩擦係数（適度な摩擦、滑りすぎない）
+      frictionAir: 0.02,  // 空気抵抗（適度な抵抗、振動を早く止める）
       gravityScale: 0,    // 初期状態では重力を無効化
       density: 0.001,     // 密度（軽く感じさせる）
     })
@@ -48,11 +48,19 @@ export class Ball {
   }
 
   // 更新（位置を同期）
-  // 落下中はBodyの位置でGraphicsを制御、落下前はGraphicsの位置でBodyを制御
+  // 落下中または落下完了後はBodyの位置でGraphicsを制御
+  // 落下前のみGraphicsの位置でBodyを制御
   update() {
     if (this.graphics && this.body) {
-      if (this.isFalling) {
-        // 落下中：Bodyの位置をGraphicsに反映
+      // 落下前（まだ落下していない状態）のみGraphicsの位置でBodyを制御
+      if (!this.isFalling && !this.fallComplete) {
+        // 落下前：Graphicsの位置をBodyに反映（静的ボディとして位置を固定）
+        this.Matter.Body.setPosition(this.body, {
+          x: this.graphics.x,
+          y: this.graphics.y
+        })
+      } else {
+        // 落下中または落下完了後：Bodyの位置をGraphicsに反映（物理エンジンの動作を妨げない）
         // Bodyが存在し、位置が有効な場合のみ反映
         if (this.body.position && 
             !isNaN(this.body.position.x) && 
@@ -61,12 +69,6 @@ export class Ball {
           this.graphics.y = this.body.position.y
           this.graphics.rotation = this.body.angle
         }
-      } else {
-        // 落下前：Graphicsの位置をBodyに反映（静的ボディとして位置を固定）
-        this.Matter.Body.setPosition(this.body, {
-          x: this.graphics.x,
-          y: this.graphics.y
-        })
       }
     }
   }

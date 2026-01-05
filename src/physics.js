@@ -9,13 +9,16 @@ export const GAME_CONFIG = {
 }
 
 // ボールレベルの定義
+const BASE_RADIUS = 25 // レベル1の基準サイズ
+const SIZE_MULTIPLIER = 1.5 // レベルごとの倍率（2.5から1.5に変更）
+
 export const BALL_LEVELS = {
-  1: { name: 'Baby', score: 2, color: 0xff6b9d, radius: 25 },
-  2: { name: 'Child', score: 6, color: 0xffa500, radius: 30 },
-  3: { name: 'Youth', score: 10, color: 0xffff00, radius: 35 },
-  4: { name: 'Adult', score: 14, color: 0x00ff00, radius: 40 },
-  5: { name: 'Middle', score: 18, color: 0x0099ff, radius: 45 },
-  6: { name: 'Elder', score: 20, color: 0x9966ff, radius: 50 },
+  1: { name: 'Baby', score: 2, color: 0xff6b9d, radius: BASE_RADIUS },
+  2: { name: 'Child', score: 6, color: 0xffa500, radius: BASE_RADIUS * SIZE_MULTIPLIER },
+  3: { name: 'Youth', score: 10, color: 0xffff00, radius: BASE_RADIUS * SIZE_MULTIPLIER ** 2 },
+  4: { name: 'Adult', score: 14, color: 0x00ff00, radius: BASE_RADIUS * SIZE_MULTIPLIER ** 3 },
+  5: { name: 'Middle', score: 18, color: 0x0099ff, radius: BASE_RADIUS * SIZE_MULTIPLIER ** 4 },
+  6: { name: 'Elder', score: 20, color: 0x9966ff, radius: BASE_RADIUS * SIZE_MULTIPLIER ** 5 },
 }
 
 // 昇天時の得点
