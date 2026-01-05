@@ -56,6 +56,14 @@ export class Game {
       groundY: this.gameHeight - 50, // 地面の位置を動的に調整
     }
 
+    // 箱の範囲を計算（画面内に配置）
+    this.gameConfig.boxLeft = GAME_CONFIG.boxMarginLeft || 20
+    this.gameConfig.boxRight = this.gameWidth - (GAME_CONFIG.boxMarginRight || 20)
+    this.gameConfig.boxTop = GAME_CONFIG.boxMarginTop || 100
+    this.gameConfig.boxBottom = this.gameConfig.groundY
+    // 箱の上端Y座標（ゲームオーバー判定用）
+    this.gameConfig.boxTopY = this.gameConfig.boxTop
+
     // 地面を作成
     this.ground = createGround(this.engine, this.gameConfig, this.Matter)
 
@@ -112,11 +120,18 @@ export class Game {
       // 落下中でないボールも除外（合体処理中など）
       // 合体直後のボールも除外（位置が確定するまで）
       if (ball.isFalling && !ball.fallComplete && !ball.isMerging) {
+        // 落下開始直後（0.5秒以内）は判定から除外（ボールが箱の上端より上から落下してくるのは正常）
+        if (ball.fallStartTime && Date.now() - ball.fallStartTime < 500) {
+          continue
+        }
+        
         const ballTop = ball.body.position.y - ball.radius
-        // ボールの上部が箱の上端を超えたらゲームオーバー
-        // ただし、ボールの中心が画面内（y > radius）にある場合のみ判定
-        // これにより、合体直後に一時的に上部が上端を超えても、中心が画面内ならゲームオーバーとしない
-        if (ballTop < this.gameConfig.boxTopY && ball.body.position.y > ball.radius) {
+        
+        // ボールが箱の上端を超えた場合のみゲームオーバー
+        // ボールの上部が箱の上端より上にあり、かつボールが箱の範囲内（boxLeft ～ boxRight）にある場合
+        if (ballTop < this.gameConfig.boxTopY && 
+            ball.body.position.x >= this.gameConfig.boxLeft && 
+            ball.body.position.x <= this.gameConfig.boxRight) {
           this.gameOver()
           return
         }
