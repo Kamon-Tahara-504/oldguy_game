@@ -9,7 +9,9 @@ export class Renderer {
     this.wallGraphics = []
     this.boxTopGraphics = null
     this.scoreText = null
+    this.highScoreText = null // ハイスコア表示
     this.previewGraphics = [] // プレビューを配列で管理（次のボールと次の次のボール）
+    this.gameOverContainer = null // ゲームオーバー画面のコンテナ
   }
 
   // 地面と壁の描画を初期化
@@ -65,12 +67,28 @@ export class Renderer {
     this.scoreText.x = 10
     this.scoreText.y = 10
     this.app.stage.addChild(this.scoreText)
+    
+    // ハイスコア表示を追加
+    this.highScoreText = new this.PIXI.Text(`High Score: ${this.game.highScore}`, {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      fill: 0xffff00,
+      stroke: 0x000000,
+      strokeThickness: 2,
+    })
+    this.highScoreText.x = 10
+    this.highScoreText.y = this.scoreText.y + this.scoreText.height + 5
+    this.app.stage.addChild(this.highScoreText)
   }
 
   // スコア表示を更新
   updateScore() {
     if (this.scoreText) {
       this.scoreText.text = `Score: ${this.game.score}`
+    }
+    // ハイスコアも更新
+    if (this.highScoreText) {
+      this.highScoreText.text = `High Score: ${this.game.highScore}`
     }
   }
 
@@ -121,6 +139,16 @@ export class Renderer {
 
   // ゲームオーバーメッセージを表示
   showGameOver() {
+    // 既存のゲームオーバー画面を削除
+    if (this.gameOverContainer) {
+      this.app.stage.removeChild(this.gameOverContainer)
+      this.gameOverContainer.destroy()
+    }
+    
+    // ゲームオーバー画面のコンテナを作成
+    this.gameOverContainer = new this.PIXI.Container()
+    
+    // GAME OVERテキスト
     const gameOverText = new this.PIXI.Text('GAME OVER', {
       fontFamily: 'Arial',
       fontSize: 48,
@@ -129,8 +157,69 @@ export class Renderer {
       strokeThickness: 4,
     })
     gameOverText.x = this.game.gameConfig.width / 2 - gameOverText.width / 2
-    gameOverText.y = this.game.gameConfig.height / 2 - gameOverText.height / 2
-    this.app.stage.addChild(gameOverText)
+    gameOverText.y = this.game.gameConfig.height / 2 - gameOverText.height / 2 - 80
+    this.gameOverContainer.addChild(gameOverText)
+    
+    // リスタートボタン
+    const buttonWidth = 200
+    const buttonHeight = 50
+    const buttonX = this.game.gameConfig.width / 2 - buttonWidth / 2
+    const buttonY = gameOverText.y + gameOverText.height + 30
+    
+    const restartButton = new this.PIXI.Graphics()
+    restartButton.beginFill(0x4CAF50)
+    restartButton.lineStyle(2, 0x000000)
+    restartButton.drawRoundedRect(0, 0, buttonWidth, buttonHeight, 10)
+    restartButton.endFill()
+    restartButton.x = buttonX
+    restartButton.y = buttonY
+    restartButton.interactive = true
+    restartButton.buttonMode = true
+    
+    // ボタンのテキスト
+    const buttonText = new this.PIXI.Text('RESTART', {
+      fontFamily: 'Arial',
+      fontSize: 24,
+      fill: 0xffffff,
+      stroke: 0x000000,
+      strokeThickness: 2,
+    })
+    buttonText.x = buttonWidth / 2 - buttonText.width / 2
+    buttonText.y = buttonHeight / 2 - buttonText.height / 2
+    restartButton.addChild(buttonText)
+    
+    // ボタンのホバー効果
+    restartButton.on('pointerover', () => {
+      restartButton.clear()
+      restartButton.beginFill(0x45a049)
+      restartButton.lineStyle(2, 0x000000)
+      restartButton.drawRoundedRect(0, 0, buttonWidth, buttonHeight, 10)
+      restartButton.endFill()
+      restartButton.addChild(buttonText)
+    })
+    
+    restartButton.on('pointerout', () => {
+      restartButton.clear()
+      restartButton.beginFill(0x4CAF50)
+      restartButton.lineStyle(2, 0x000000)
+      restartButton.drawRoundedRect(0, 0, buttonWidth, buttonHeight, 10)
+      restartButton.endFill()
+      restartButton.addChild(buttonText)
+    })
+    
+    // クリックイベント
+    restartButton.on('pointerdown', () => {
+      this.game.restart()
+      // ゲームオーバー画面を削除
+      if (this.gameOverContainer) {
+        this.app.stage.removeChild(this.gameOverContainer)
+        this.gameOverContainer.destroy()
+        this.gameOverContainer = null
+      }
+    })
+    
+    this.gameOverContainer.addChild(restartButton)
+    this.app.stage.addChild(this.gameOverContainer)
   }
 }
 

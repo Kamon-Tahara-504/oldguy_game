@@ -19,6 +19,8 @@ export class Game {
     this.walls = []
     this.score = 0
     this.isGameOver = false
+    // ハイスコアをlocalStorageから読み込み
+    this.highScore = parseInt(localStorage.getItem('oldguy_game_highscore') || '0', 10)
     
     // 動的サイズを取得（後で更新されるが、初期値として設定）
     this.gameWidth = this.app.screen.width
@@ -144,7 +146,52 @@ export class Game {
 
   gameOver() {
     this.isGameOver = true
+    // ハイスコアを更新
+    if (this.score > this.highScore) {
+      this.highScore = this.score
+      localStorage.setItem('oldguy_game_highscore', this.highScore.toString())
+    }
     this.renderer.showGameOver()
+  }
+
+  restart() {
+    // 既存のボールをすべて削除
+    this.balls.forEach(ball => {
+      ball.destroy()
+    })
+    this.balls = []
+    
+    // 現在のボールを削除
+    if (this.currentBall) {
+      this.currentBall.destroy()
+      this.currentBall = null
+    }
+    
+    // ゲーム状態をリセット
+    this.score = 0
+    this.isGameOver = false
+    this.nextBallLevel = 1
+    this.nextNextBallLevel = Math.floor(Math.random() * 4) + 1
+    this.lastBallDropTime = 0
+    
+    // Matter.jsエンジンの世界をクリア
+    this.Matter.World.clear(this.engine.world, false)
+    
+    // 地面と壁を再作成
+    this.ground = createGround(this.engine, this.gameConfig, this.Matter)
+    this.walls = createWalls(this.engine, this.gameConfig, this.Matter)
+    
+    // 地面と壁の描画を再初期化
+    this.renderer.initGroundAndWalls(this.walls)
+    
+    // スコア表示を更新
+    this.renderer.updateScore()
+    
+    // プレビューを更新
+    this.renderer.updatePreview()
+    
+    // 最初のボールを生成
+    this.ballManager.createNextBall()
   }
 
   update() {
