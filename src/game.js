@@ -42,6 +42,11 @@ export class Game {
     this.engine.world.gravity.y = GAME_CONFIG.gravity
     // スリープ機能を有効化（停止したボールの物理計算を省略し、振動も抑制）
     this.engine.enableSleeping = true
+    // 衝突解決の精度を向上させる設定
+    this.engine.positionIterations = 6  // 位置反復回数を増やす（デフォルト: 6）
+    this.engine.velocityIterations = 4   // 速度反復回数を増やす（デフォルト: 4）
+    // タイミング設定を調整（より滑らかな動き）
+    this.engine.timing.timeScale = 1.0
 
     // 動的サイズの設定を作成（保存して後で使用）
     this.gameConfig = {
@@ -76,6 +81,10 @@ export class Game {
     this.Matter.Events.on(this.engine, 'collisionStart', (event) => {
       this.collisionHandler.handleCollision(event)
     })
+    // collisionActiveイベントも追加（継続的な衝突を検出）
+    this.Matter.Events.on(this.engine, 'collisionActive', (event) => {
+      this.collisionHandler.handleCollision(event)
+    })
 
     // ゲームループ
     this.app.ticker.add(() => {
@@ -101,10 +110,13 @@ export class Game {
     // currentBallは判定対象外（落下前のボールは箱の外にあるため除外）
     for (const ball of this.balls) {
       // 落下中でないボールも除外（合体処理中など）
-      if (ball.isFalling) {
+      // 合体直後のボールも除外（位置が確定するまで）
+      if (ball.isFalling && !ball.fallComplete && !ball.isMerging) {
         const ballTop = ball.body.position.y - ball.radius
         // ボールの上部が箱の上端を超えたらゲームオーバー
-        if (ballTop < this.gameConfig.boxTopY) {
+        // ただし、ボールの中心が画面内（y > radius）にある場合のみ判定
+        // これにより、合体直後に一時的に上部が上端を超えても、中心が画面内ならゲームオーバーとしない
+        if (ballTop < this.gameConfig.boxTopY && ball.body.position.y > ball.radius) {
           this.gameOver()
           return
         }
@@ -130,17 +142,21 @@ export class Game {
     }
     
     // 落下中のボールのfallCompleteフラグを更新（合体後のボール用）
-    // 注: 次のボールの生成はstartBallFall()で即座に行うため、ここでの判定は簡略化
+    // 注: fallCompleteは物理エンジンの動作を妨げないフラグとして使用
+    // ボールが完全に停止するまで待つ（より緩和した条件）
     for (const ball of this.balls) {
       if (ball.isFalling && !ball.fallComplete) {
         const body = ball.body
         const velocity = Math.abs(body.velocity.x) + Math.abs(body.velocity.y)
+        const angularVelocity = Math.abs(body.angularVelocity)
         const isGrounded = body.position.y >= this.gameConfig.groundY - ball.radius - 10
         
-        // 速度が非常に小さい場合（ほぼ停止）かつ地面に到達している場合、落下完了とみなす
-        if (velocity < 0.5 && isGrounded) {
-          ball.isFalling = false
+        // 速度と角速度が非常に小さい場合（ほぼ完全停止）かつ地面に到達している場合のみ、落下完了とみなす
+        // 値は0.05に下げて、より完全に停止するまで待つ
+        // ただし、fallComplete後も物理エンジンの影響を受け続ける（ball.jsのupdate関数で処理）
+        if (velocity < 0.05 && angularVelocity < 0.05 && isGrounded) {
           ball.fallComplete = true
+          // isFallingはtrueのままにしておく（物理エンジンの動作を妨げないため）
         }
       }
     }
