@@ -13,6 +13,7 @@ export class Game {
     this.balls = []
     this.currentBall = null
     this.nextBallLevel = 1
+    this.nextNextBallLevel = Math.floor(Math.random() * 4) + 1 // 次の次のボールのレベル（1-4レベル）
     this.isDragging = false
     this.ground = null
     this.walls = []
@@ -27,9 +28,9 @@ export class Game {
     this.mouseX = this.gameWidth / 2  // 初期値は中央
     this.mouseY = 50
     
-    // ボール放出のクールダウン（2秒 = 2000ミリ秒）
+    // ボール放出のクールダウン（1秒 = 1000ミリ秒）
     this.lastBallDropTime = 0
-    this.ballDropCooldown = 2000 // 2秒
+    this.ballDropCooldown = 1000 // 1秒
 
     // Matter.jsエンジンを作成
     const MatterLib = Matter.default || Matter
@@ -127,9 +128,11 @@ export class Game {
         
         const ballTop = ball.body.position.y - ball.radius
         
-        // ボールが箱の上端を超えた場合のみゲームオーバー
-        // ボールの上部が箱の上端より上にあり、かつボールが箱の範囲内（boxLeft ～ boxRight）にある場合
+        // ボールの大部分（50%以上）が箱の上端を超えた場合のみゲームオーバー
+        // ボールの上部が箱の上端より上にあり、かつ箱の上端からボールの上部までの距離がボールの半径の50%以上である場合
+        // かつ、ボールが箱の範囲内（boxLeft ～ boxRight）にある場合
         if (ballTop < this.gameConfig.boxTopY && 
+            (this.gameConfig.boxTopY - ballTop) >= ball.radius * 0.5 &&
             ball.body.position.x >= this.gameConfig.boxLeft && 
             ball.body.position.x <= this.gameConfig.boxRight) {
           this.gameOver()

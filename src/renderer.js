@@ -9,7 +9,7 @@ export class Renderer {
     this.wallGraphics = []
     this.boxTopGraphics = null
     this.scoreText = null
-    this.previewGraphics = null
+    this.previewGraphics = [] // プレビューを配列で管理（次のボールと次の次のボール）
   }
 
   // 地面と壁の描画を初期化
@@ -76,26 +76,47 @@ export class Renderer {
 
   // プレビューを更新
   updatePreview() {
-    // プレビューを削除
-    if (this.previewGraphics) {
-      this.app.stage.removeChild(this.previewGraphics)
-      this.previewGraphics.destroy()
-    }
+    // 既存のプレビューを削除
+    this.previewGraphics.forEach(graphics => {
+      if (graphics && graphics.parent) {
+        this.app.stage.removeChild(graphics)
+        graphics.destroy()
+      }
+    })
+    this.previewGraphics = []
 
-    // 新しいプレビューを作成
-    const previewX = this.game.gameConfig.width - 80
     const previewY = 50
-    const levelData = BALL_LEVELS[this.game.nextBallLevel]
-    const previewRadius = levelData.radius * 0.6
+    const previewSpacing = 70 // プレビュー間の間隔
 
-    this.previewGraphics = new this.PIXI.Graphics()
-    this.previewGraphics.beginFill(levelData.color)
-    this.previewGraphics.lineStyle(2, 0x000000)
-    this.previewGraphics.drawCircle(0, 0, previewRadius)
-    this.previewGraphics.endFill()
-    this.previewGraphics.x = previewX
-    this.previewGraphics.y = previewY
-    this.app.stage.addChild(this.previewGraphics)
+    // 次の次のボールのプレビュー（左側）
+    const nextNextLevelData = BALL_LEVELS[this.game.nextNextBallLevel]
+    const nextNextPreviewRadius = nextNextLevelData.radius * 0.6
+    const nextNextPreviewX = this.game.gameConfig.width - 80 - previewSpacing
+
+    const nextNextPreview = new this.PIXI.Graphics()
+    nextNextPreview.beginFill(nextNextLevelData.color)
+    nextNextPreview.lineStyle(2, 0x000000)
+    nextNextPreview.drawCircle(0, 0, nextNextPreviewRadius)
+    nextNextPreview.endFill()
+    nextNextPreview.x = nextNextPreviewX
+    nextNextPreview.y = previewY
+    this.app.stage.addChild(nextNextPreview)
+    this.previewGraphics.push(nextNextPreview)
+
+    // 次のボールのプレビュー（右側）
+    const nextLevelData = BALL_LEVELS[this.game.nextBallLevel]
+    const nextPreviewRadius = nextLevelData.radius * 0.6
+    const nextPreviewX = this.game.gameConfig.width - 80
+
+    const nextPreview = new this.PIXI.Graphics()
+    nextPreview.beginFill(nextLevelData.color)
+    nextPreview.lineStyle(2, 0x000000)
+    nextPreview.drawCircle(0, 0, nextPreviewRadius)
+    nextPreview.endFill()
+    nextPreview.x = nextPreviewX
+    nextPreview.y = previewY
+    this.app.stage.addChild(nextPreview)
+    this.previewGraphics.push(nextPreview)
   }
 
   // ゲームオーバーメッセージを表示
