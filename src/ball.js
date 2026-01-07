@@ -11,6 +11,11 @@ export class Ball {
     this.isMerging = false
     this.fallComplete = false // 落下完了フラグ
     this.fallStartTime = null // 落下開始時刻（ゲームオーバー判定の除外用）
+    
+    // アニメーション関連のプロパティ
+    this.isAnimating = false
+    this.animationStartTime = null
+    this.animationDuration = 400 // 400ms
 
     const levelData = BALL_LEVELS[level]
     if (!levelData) {
@@ -47,6 +52,44 @@ export class Ball {
     this.isFalling = true
     this.fallStartTime = Date.now() // 落下開始時刻を記録
     // Matter.jsのエンジンレベルの重力を使用
+  }
+
+  // アニメーションを開始
+  startSpawnAnimation() {
+    this.isAnimating = true
+    this.animationStartTime = Date.now()
+    
+    // 初期状態を設定
+    this.graphics.scale.set(0.3)
+    this.graphics.alpha = 0
+  }
+
+  // イージング関数（ease-out）
+  easeOut(t) {
+    return 1 - Math.pow(1 - t, 3) // cubic ease-out
+  }
+
+  // アニメーションを更新
+  updateAnimation() {
+    if (!this.isAnimating || !this.animationStartTime) return
+
+    const elapsed = Date.now() - this.animationStartTime
+    const progress = Math.min(elapsed / this.animationDuration, 1.0)
+    const easedProgress = this.easeOut(progress)
+
+    // スケールと透明度を更新
+    const scale = 0.3 + (1.0 - 0.3) * easedProgress
+    const alpha = 0 + (1.0 - 0) * easedProgress
+
+    this.graphics.scale.set(scale)
+    this.graphics.alpha = alpha
+
+    // アニメーション完了時
+    if (progress >= 1.0) {
+      this.isAnimating = false
+      this.graphics.scale.set(1.0)
+      this.graphics.alpha = 1.0
+    }
   }
 
   // 更新（位置を同期）
