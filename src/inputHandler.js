@@ -28,7 +28,8 @@ export class InputHandler {
         this.game.currentBall.radius,
         Math.min(this.game.gameConfig.width - this.game.currentBall.radius, this.game.mouseX)
       )
-      const fixedY = 50
+      const boxTop = this.game.gameConfig.boxTop || 100
+      const fixedY = boxTop - 50
       this.game.currentBall.graphics.x = xClamped
       this.game.currentBall.graphics.y = fixedY
     }
@@ -61,11 +62,15 @@ export class InputHandler {
       )
 
       // Y座標は固定（初期位置を維持）
-      const fixedY = 50
+      const boxTop = this.game.gameConfig.boxTop || 100
+      const fixedY = boxTop - 50
 
       // Graphicsの位置を直接変更（Bodyはupdate()で同期される）
       this.game.currentBall.graphics.x = xClamped
       this.game.currentBall.graphics.y = fixedY
+      
+      // 軌道を更新（TrajectoryRenderer内でスロットル処理されているため、過度な更新は防がれる）
+      this.game.renderer.updateTrajectory()
     }
   }
 }

@@ -116,6 +116,9 @@ export class BallManager {
     // クールダウンタイマーを更新
     this.game.lastBallDropTime = currentTime
 
+    // 予測線を即座にクリア
+    this.game.renderer.trajectoryRenderer.clear()
+
     // 現在のボールをクリア
     this.game.currentBall = null
 
