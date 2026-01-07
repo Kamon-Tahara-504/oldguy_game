@@ -54,6 +54,9 @@ export class BallManager {
     this.game.currentBall.graphics.x = startX
     this.game.currentBall.graphics.y = startY
 
+    // アニメーションを開始
+    this.game.currentBall.startSpawnAnimation()
+
     // 次のボールのレベルを更新
     // nextBallLevelをnextNextBallLevelに移動し、新しいnextNextBallLevelを決定
     this.game.nextBallLevel = this.game.nextNextBallLevel

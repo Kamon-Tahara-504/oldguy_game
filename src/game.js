@@ -88,6 +88,11 @@ export class Game {
     if (this.state.currentBall) {
       // 落下前のボールはGraphicsの位置でBodyを制御（Ball.update()で処理）
       this.state.currentBall.update()
+      
+      // アニメーションを更新
+      if (this.state.currentBall.isAnimating) {
+        this.state.currentBall.updateAnimation()
+      }
     }
     
     // 落下軌道を更新（ボールが落下していない時のみ）
