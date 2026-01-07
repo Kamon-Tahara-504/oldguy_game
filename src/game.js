@@ -128,24 +128,24 @@ export class Game {
 
   checkGameOver() {
     // 箱から溢れたボールがあるかチェック
-    // ボールの上部（body.position.y - ball.radius）が箱の上端を超えたらゲームオーバー
+    // ボールの中心が箱の上端より上にある場合のみゲームオーバー
     // currentBallは判定対象外（落下前のボールは箱の外にあるため除外）
     for (const ball of this.state.balls) {
       // 落下中でないボールも除外（合体処理中など）
       // 合体直後のボールも除外（位置が確定するまで）
       if (ball.isFalling && !ball.fallComplete && !ball.isMerging) {
-        // 落下開始直後（0.5秒以内）は判定から除外（ボールが箱の上端より上から落下してくるのは正常）
-        if (ball.fallStartTime && Date.now() - ball.fallStartTime < 500) {
+        // 落下開始直後（1秒以内）は判定から除外（ボールが箱の上端より上から落下してくるのは正常）
+        if (ball.fallStartTime && Date.now() - ball.fallStartTime < 1000) {
           continue
         }
         
-        const ballTop = ball.body.position.y - ball.radius
+        // ボールの中心位置を取得
+        const ballCenterY = ball.body.position.y
         
-        // ボールの大部分（50%以上）が箱の上端を超えた場合のみゲームオーバー
-        // ボールの上部が箱の上端より上にあり、かつ箱の上端からボールの上部までの距離がボールの半径の50%以上である場合
+        // ボールの中心が箱の上端より上にある場合のみゲームオーバー
         // かつ、ボールが箱の範囲内（boxLeft ～ boxRight）にある場合
-        if (ballTop < this.gameConfig.boxTopY && 
-            (this.gameConfig.boxTopY - ballTop) >= ball.radius * 0.5 &&
+        // これにより、ボールが上端ラインに触れただけではゲームオーバーにならない
+        if (ballCenterY < this.gameConfig.boxTopY &&
             ball.body.position.x >= this.gameConfig.boxLeft && 
             ball.body.position.x <= this.gameConfig.boxRight) {
           this.gameOver()

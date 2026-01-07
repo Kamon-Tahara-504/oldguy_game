@@ -24,10 +24,17 @@ export class InputHandler {
     
     // ボールが存在し、まだ落下していない場合、位置を更新
     if (this.game.currentBall && !this.game.currentBall.isFalling && !this.game.isGameOver) {
+      // 箱の範囲内に制限（ボールの半径を考慮）
+      const boxLeft = this.game.gameConfig.boxLeft
+      const boxRight = this.game.gameConfig.boxRight
+      const ballRadius = this.game.currentBall.radius
+      
+      // ボールが箱の範囲内に収まるように制限
       const xClamped = Math.max(
-        this.game.currentBall.radius,
-        Math.min(this.game.gameConfig.width - this.game.currentBall.radius, this.game.mouseX)
+        boxLeft + ballRadius,
+        Math.min(boxRight - ballRadius, this.game.mouseX)
       )
+      
       const boxTop = this.game.gameConfig.boxTop || 100
       const fixedY = boxTop - 50
       this.game.currentBall.graphics.x = xClamped
@@ -56,9 +63,15 @@ export class InputHandler {
     
     // ボールが落下していない場合は常にマウスに追従（Graphicsのみ制御）
     if (this.game.currentBall && !this.game.currentBall.isFalling && !this.game.isGameOver) {
+      // 箱の範囲内に制限（ボールの半径を考慮）
+      const boxLeft = this.game.gameConfig.boxLeft
+      const boxRight = this.game.gameConfig.boxRight
+      const ballRadius = this.game.currentBall.radius
+      
+      // ボールが箱の範囲内に収まるように制限
       const xClamped = Math.max(
-        this.game.currentBall.radius,
-        Math.min(this.game.gameConfig.width - this.game.currentBall.radius, this.game.mouseX)
+        boxLeft + ballRadius,
+        Math.min(boxRight - ballRadius, this.game.mouseX)
       )
 
       // Y座標は固定（初期位置を維持）

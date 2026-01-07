@@ -16,9 +16,10 @@ export class BallManager {
     // 現在のマウス位置を使用（最新の位置を反映）
     const levelData = BALL_LEVELS[this.game.nextBallLevel]
     const ballRadius = levelData.radius
-    // マウス位置が箱の範囲内にあることを確認
-    const boxLeft = this.game.gameConfig.boxLeft || ballRadius
-    const boxRight = this.game.gameConfig.boxRight || (this.game.gameConfig.width - ballRadius)
+    // マウス位置が箱の範囲内にあることを確認（ボールの半径を考慮）
+    const boxLeft = this.game.gameConfig.boxLeft
+    const boxRight = this.game.gameConfig.boxRight
+    // ボールが箱の範囲内に収まるように制限
     const clampedMouseX = Math.max(
       boxLeft + ballRadius,
       Math.min(
@@ -70,12 +71,14 @@ export class BallManager {
     }
 
     // 最新のマウス位置でGraphicsを更新（念のため）
-    // 箱の範囲内に収まるように調整
-    const boxLeft = this.game.gameConfig.boxLeft || this.game.currentBall.radius
-    const boxRight = this.game.gameConfig.boxRight || (this.game.gameConfig.width - this.game.currentBall.radius)
+    // 箱の範囲内に収まるように調整（ボールの半径を考慮）
+    const boxLeft = this.game.gameConfig.boxLeft
+    const boxRight = this.game.gameConfig.boxRight
+    const ballRadius = this.game.currentBall.radius
+    // ボールが箱の範囲内に収まるように制限
     const xClamped = Math.max(
-      boxLeft + this.game.currentBall.radius,
-      Math.min(boxRight - this.game.currentBall.radius, this.game.mouseX)
+      boxLeft + ballRadius,
+      Math.min(boxRight - ballRadius, this.game.mouseX)
     )
     // ボールの位置を箱の上端より上（箱の外）に設定
     const boxTop = this.game.gameConfig.boxTop || 100

@@ -21,27 +21,35 @@ export class GameOverRenderer {
     
     // GAME OVERテキスト
     const gameOverText = new this.PIXI.Text('GAME OVER', {
-      fontFamily: 'Arial',
-      fontSize: 48,
-      fill: 0xff0000,
-      stroke: 0x000000,
-      strokeThickness: 4,
+      fontFamily: 'Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif',
+      fontSize: 56,
+      fill: 0x2c3e50, // ダークグレー
+      fontWeight: '700',
     })
     gameOverText.x = this.game.gameConfig.width / 2 - gameOverText.width / 2
-    gameOverText.y = this.game.gameConfig.height / 2 - gameOverText.height / 2 - 80
+    gameOverText.y = this.game.gameConfig.height / 2 - gameOverText.height / 2 - 100
     this.gameOverContainer.addChild(gameOverText)
     
     // リスタートボタン
-    const buttonWidth = 200
-    const buttonHeight = 50
+    const buttonWidth = 220
+    const buttonHeight = 60
     const buttonX = this.game.gameConfig.width / 2 - buttonWidth / 2
-    const buttonY = gameOverText.y + gameOverText.height + 30
+    const buttonY = gameOverText.y + gameOverText.height + 40
     
     const restartButton = new this.PIXI.Graphics()
-    restartButton.beginFill(0x4CAF50)
-    restartButton.lineStyle(2, 0x000000)
-    restartButton.drawRoundedRect(0, 0, buttonWidth, buttonHeight, 10)
+    
+    // ボタンの影
+    const buttonShadow = new this.PIXI.Graphics()
+    buttonShadow.beginFill(0x000000, 0.2)
+    buttonShadow.drawRoundedRect(2, 2, buttonWidth, buttonHeight, 16)
+    buttonShadow.endFill()
+    restartButton.addChild(buttonShadow)
+    
+    // ボタンの背景（グラデーション風）
+    restartButton.beginFill(0x3498db) // モダンな青
+    restartButton.drawRoundedRect(0, 0, buttonWidth, buttonHeight, 16)
     restartButton.endFill()
+    
     restartButton.x = buttonX
     restartButton.y = buttonY
     restartButton.interactive = true
@@ -49,11 +57,10 @@ export class GameOverRenderer {
     
     // ボタンのテキスト
     const buttonText = new this.PIXI.Text('RESTART', {
-      fontFamily: 'Arial',
+      fontFamily: 'Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif',
       fontSize: 24,
       fill: 0xffffff,
-      stroke: 0x000000,
-      strokeThickness: 2,
+      fontWeight: '600',
     })
     buttonText.x = buttonWidth / 2 - buttonText.width / 2
     buttonText.y = buttonHeight / 2 - buttonText.height / 2
@@ -62,18 +69,26 @@ export class GameOverRenderer {
     // ボタンのホバー効果
     restartButton.on('pointerover', () => {
       restartButton.clear()
-      restartButton.beginFill(0x45a049)
-      restartButton.lineStyle(2, 0x000000)
-      restartButton.drawRoundedRect(0, 0, buttonWidth, buttonHeight, 10)
+      const shadow = new this.PIXI.Graphics()
+      shadow.beginFill(0x000000, 0.25)
+      shadow.drawRoundedRect(2, 2, buttonWidth, buttonHeight, 16)
+      shadow.endFill()
+      restartButton.addChild(shadow)
+      restartButton.beginFill(0x2980b9) // 濃い青
+      restartButton.drawRoundedRect(0, 0, buttonWidth, buttonHeight, 16)
       restartButton.endFill()
       restartButton.addChild(buttonText)
     })
     
     restartButton.on('pointerout', () => {
       restartButton.clear()
-      restartButton.beginFill(0x4CAF50)
-      restartButton.lineStyle(2, 0x000000)
-      restartButton.drawRoundedRect(0, 0, buttonWidth, buttonHeight, 10)
+      const shadow = new this.PIXI.Graphics()
+      shadow.beginFill(0x000000, 0.2)
+      shadow.drawRoundedRect(2, 2, buttonWidth, buttonHeight, 16)
+      shadow.endFill()
+      restartButton.addChild(shadow)
+      restartButton.beginFill(0x3498db) // 元の青
+      restartButton.drawRoundedRect(0, 0, buttonWidth, buttonHeight, 16)
       restartButton.endFill()
       restartButton.addChild(buttonText)
     })
