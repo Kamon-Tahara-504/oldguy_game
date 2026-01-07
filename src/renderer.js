@@ -5,6 +5,7 @@ import { GameOverRenderer } from './renderers/gameOverRenderer.js'
 import { PreviewRenderer } from './renderers/previewRenderer.js'
 import { BoxRenderer } from './renderers/boxRenderer.js'
 import { TrajectoryRenderer } from './renderers/trajectoryRenderer.js'
+import { CloudRenderer } from './renderers/cloudRenderer.js'
 
 export class Renderer {
   constructor(game, app, PIXI) {
@@ -18,11 +19,14 @@ export class Renderer {
     this.previewRenderer = new PreviewRenderer(game, app, PIXI)
     this.boxRenderer = new BoxRenderer(game, app, PIXI)
     this.trajectoryRenderer = new TrajectoryRenderer(game, app, PIXI)
+    this.cloudRenderer = new CloudRenderer(game, app, PIXI)
   }
 
   // 地面と壁の描画を初期化
   initGroundAndWalls(walls) {
     this.boxRenderer.init(walls)
+    // 雲を初期化（背景の上に配置される）
+    this.cloudRenderer.init()
   }
 
   // スコア表示を初期化
@@ -48,5 +52,10 @@ export class Renderer {
   // 落下軌道を更新
   updateTrajectory() {
     this.trajectoryRenderer.update()
+  }
+
+  // 雲を更新
+  updateClouds() {
+    this.cloudRenderer.update()
   }
 }
