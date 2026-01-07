@@ -95,6 +95,9 @@ export class Game {
       this.renderer.updateTrajectory()
     }
     
+    // 雲を更新（パララックス効果）
+    this.renderer.updateClouds()
+    
     // 落下中のボールのfallCompleteフラグを更新（合体後のボール用）
     // 注: fallCompleteは物理エンジンの動作を妨げないフラグとして使用
     // ボールが完全に停止するまで待つ（より緩和した条件）

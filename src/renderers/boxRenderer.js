@@ -97,9 +97,9 @@ export class BoxRenderer {
     const height = this.game.gameConfig.height
     const steps = 100 // グラデーションのステップ数
     
-    // 上から下へのグラデーション（薄い青から白へ）
-    const startColor = { r: 173, g: 216, b: 230 } // ライトブルー
-    const endColor = { r: 255, g: 255, b: 255 } // 白
+    // 上から下へのグラデーション（濃い青から薄い青へ）
+    const startColor = { r: 100, g: 180, b: 240 } // スカイブルー（より濃い青）
+    const endColor = { r: 173, g: 216, b: 250 } // ライトブルー（薄い青、白ではなく）
     
     for (let i = 0; i < steps; i++) {
       const ratio = i / steps
