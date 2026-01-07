@@ -4,6 +4,7 @@ import { UIRenderer } from './renderers/uiRenderer.js'
 import { GameOverRenderer } from './renderers/gameOverRenderer.js'
 import { PreviewRenderer } from './renderers/previewRenderer.js'
 import { BoxRenderer } from './renderers/boxRenderer.js'
+import { TrajectoryRenderer } from './renderers/trajectoryRenderer.js'
 
 export class Renderer {
   constructor(game, app, PIXI) {
@@ -16,6 +17,7 @@ export class Renderer {
     this.gameOverRenderer = new GameOverRenderer(game, app, PIXI)
     this.previewRenderer = new PreviewRenderer(game, app, PIXI)
     this.boxRenderer = new BoxRenderer(game, app, PIXI)
+    this.trajectoryRenderer = new TrajectoryRenderer(game, app, PIXI)
   }
 
   // 地面と壁の描画を初期化
@@ -41,5 +43,10 @@ export class Renderer {
   // ゲームオーバーメッセージを表示
   showGameOver() {
     this.gameOverRenderer.show()
+  }
+
+  // 落下軌道を更新
+  updateTrajectory() {
+    this.trajectoryRenderer.update()
   }
 }

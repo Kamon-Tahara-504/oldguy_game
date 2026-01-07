@@ -176,6 +176,11 @@ export class Game {
       this.state.currentBall.update()
     }
     
+    // 落下軌道を更新（ボールが落下していない時のみ）
+    if (this.state.currentBall && !this.state.currentBall.isFalling && !this.state.isGameOver) {
+      this.renderer.updateTrajectory()
+    }
+    
     // 落下中のボールのfallCompleteフラグを更新（合体後のボール用）
     // 注: fallCompleteは物理エンジンの動作を妨げないフラグとして使用
     // ボールが完全に停止するまで待つ（より緩和した条件）
