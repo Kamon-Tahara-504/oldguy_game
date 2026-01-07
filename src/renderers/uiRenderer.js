@@ -5,34 +5,61 @@ export class UIRenderer {
     this.game = game
     this.app = app
     this.PIXI = PIXI
+    this.scoreContainer = null
     this.scoreText = null
     this.highScoreText = null
   }
 
   // スコア表示を初期化
   init() {
-    this.scoreText = new this.PIXI.Text(`Score: ${this.game.score}`, {
-      fontFamily: 'Arial',
-      fontSize: 24,
-      fill: 0xffffff,
-      stroke: 0x000000,
-      strokeThickness: 2,
-    })
-    this.scoreText.x = 10
-    this.scoreText.y = 10
-    this.app.stage.addChild(this.scoreText)
+    // コンテナを作成
+    this.scoreContainer = new this.PIXI.Container()
     
-    // ハイスコア表示を追加
-    this.highScoreText = new this.PIXI.Text(`High Score: ${this.game.highScore}`, {
-      fontFamily: 'Arial',
-      fontSize: 20,
-      fill: 0xffff00,
-      stroke: 0x000000,
-      strokeThickness: 2,
+    // 背景パネル（カード形式）
+    const panelPadding = 20
+    const panelWidth = 200
+    const panelHeight = 100
+    const panelX = 20
+    const panelY = 20
+    
+    const panel = new this.PIXI.Graphics()
+    panel.beginFill(0xffffff, 0.15) // 半透明の白
+    panel.drawRoundedRect(0, 0, panelWidth, panelHeight, 12)
+    panel.endFill()
+    
+    // 影を追加（複数の矩形で表現）
+    const shadow = new this.PIXI.Graphics()
+    shadow.beginFill(0x000000, 0.1)
+    shadow.drawRoundedRect(2, 2, panelWidth, panelHeight, 12)
+    shadow.endFill()
+    this.scoreContainer.addChild(shadow)
+    this.scoreContainer.addChild(panel)
+    
+    // スコアテキスト
+    this.scoreText = new this.PIXI.Text(`Score: ${this.game.score}`, {
+      fontFamily: 'Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif',
+      fontSize: 28,
+      fill: 0x2c3e50, // ダークグレー
+      fontWeight: '600',
     })
-    this.highScoreText.x = 10
-    this.highScoreText.y = this.scoreText.y + this.scoreText.height + 5
-    this.app.stage.addChild(this.highScoreText)
+    this.scoreText.x = panelPadding
+    this.scoreText.y = panelPadding
+    this.scoreContainer.addChild(this.scoreText)
+    
+    // ハイスコア表示
+    this.highScoreText = new this.PIXI.Text(`High: ${this.game.highScore}`, {
+      fontFamily: 'Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif',
+      fontSize: 20,
+      fill: 0x7f8c8d, // ミディアムグレー
+      fontWeight: '400',
+    })
+    this.highScoreText.x = panelPadding
+    this.highScoreText.y = panelPadding + this.scoreText.height + 8
+    this.scoreContainer.addChild(this.highScoreText)
+    
+    this.scoreContainer.x = panelX
+    this.scoreContainer.y = panelY
+    this.app.stage.addChild(this.scoreContainer)
   }
 
   // スコア表示を更新
@@ -42,7 +69,7 @@ export class UIRenderer {
     }
     // ハイスコアも更新
     if (this.highScoreText) {
-      this.highScoreText.text = `High Score: ${this.game.highScore}`
+      this.highScoreText.text = `High: ${this.game.highScore}`
     }
   }
 }

@@ -5,6 +5,7 @@ export class BoxRenderer {
     this.game = game
     this.app = app
     this.PIXI = PIXI
+    this.backgroundGraphics = null
     this.groundGraphics = null
     this.wallGraphics = []
     this.boxTopGraphics = null
@@ -12,6 +13,8 @@ export class BoxRenderer {
 
   // 地面と壁の描画を初期化
   init(walls) {
+    // 背景にグラデーションを追加
+    this.drawGradientBackground()
     // 箱の範囲を取得
     const boxLeft = this.game.gameConfig.boxLeft
     const boxRight = this.game.gameConfig.boxRight
@@ -21,24 +24,50 @@ export class BoxRenderer {
 
     // 箱の上端ラインを描画（視覚的な境界線のみ、物理的な壁はなし）
     this.boxTopGraphics = new this.PIXI.Graphics()
-    this.boxTopGraphics.lineStyle(4, 0x654321, 0.95) // 暗めの茶色、太さ4px、不透明度0.95
+    this.boxTopGraphics.lineStyle(2, 0x95a5a6, 0.4) // 薄いグレー、太さ2px、透明度0.4
     this.boxTopGraphics.moveTo(boxLeft, boxTop)
     this.boxTopGraphics.lineTo(boxRight, boxTop)
     this.app.stage.addChild(this.boxTopGraphics)
 
     // 箱の底面（地面）を描画
     this.groundGraphics = new this.PIXI.Graphics()
-    this.groundGraphics.beginFill(0x8b4513) // 茶色
-    this.groundGraphics.lineStyle(4, 0x654321, 0.95) // 箱の境界線として明確に（太さ4px、不透明度0.95）
+    
+    // 地面の影
+    const groundShadow = new this.PIXI.Graphics()
+    groundShadow.beginFill(0x000000, 0.15)
+    groundShadow.drawRect(boxLeft, boxBottom - 8, boxRight - boxLeft, 18)
+    groundShadow.endFill()
+    this.app.stage.addChild(groundShadow)
+    
+    // 地面のグラデーション（簡易版）
+    this.groundGraphics.beginFill(0xecf0f1) // ライトグレー
     this.groundGraphics.drawRect(boxLeft, boxBottom - 10, boxRight - boxLeft, 20)
     this.groundGraphics.endFill()
+    
+    // 地面の上端に薄いライン
+    this.groundGraphics.lineStyle(1, 0xbdc3c7, 0.5) // 薄いグレー
+    this.groundGraphics.moveTo(boxLeft, boxBottom - 10)
+    this.groundGraphics.lineTo(boxRight, boxBottom - 10)
     this.app.stage.addChild(this.groundGraphics)
 
     // 箱の側面（左右の壁）を描画
     walls.forEach((wall, index) => {
       const wallGraphics = new this.PIXI.Graphics()
-      wallGraphics.beginFill(0x654321) // 暗めの茶色
-      wallGraphics.lineStyle(4, 0x543210, 0.95) // 箱の境界線（太さ4px、不透明度0.95）
+      
+      // 壁の影
+      const wallShadow = new this.PIXI.Graphics()
+      wallShadow.beginFill(0x000000, 0.1)
+      wallShadow.drawRect(
+        wall.bounds.min.x + 2,
+        wall.bounds.min.y + 2,
+        wall.bounds.max.x - wall.bounds.min.x,
+        wall.bounds.max.y - wall.bounds.min.y
+      )
+      wallShadow.endFill()
+      this.app.stage.addChild(wallShadow)
+      
+      wallGraphics.beginFill(0xecf0f1) // ライトグレー
+      wallGraphics.lineStyle(1, 0xbdc3c7, 0.3) // 薄い境界線
       wallGraphics.drawRect(
         wall.bounds.min.x,
         wall.bounds.min.y,
@@ -49,6 +78,46 @@ export class BoxRenderer {
       this.app.stage.addChild(wallGraphics)
       this.wallGraphics.push(wallGraphics)
     })
+  }
+
+  // グラデーション背景を描画
+  drawGradientBackground() {
+    // 既存の背景を削除
+    if (this.backgroundGraphics) {
+      if (this.backgroundGraphics.parent) {
+        this.app.stage.removeChild(this.backgroundGraphics)
+      }
+      this.backgroundGraphics.destroy()
+    }
+
+    // グラデーション背景を作成（複数の矩形でグラデーション効果を実現）
+    this.backgroundGraphics = new this.PIXI.Graphics()
+    
+    const width = this.game.gameConfig.width
+    const height = this.game.gameConfig.height
+    const steps = 100 // グラデーションのステップ数
+    
+    // 上から下へのグラデーション（薄い青から白へ）
+    const startColor = { r: 173, g: 216, b: 230 } // ライトブルー
+    const endColor = { r: 255, g: 255, b: 255 } // 白
+    
+    for (let i = 0; i < steps; i++) {
+      const ratio = i / steps
+      const r = Math.floor(startColor.r + (endColor.r - startColor.r) * ratio)
+      const g = Math.floor(startColor.g + (endColor.g - startColor.g) * ratio)
+      const b = Math.floor(startColor.b + (endColor.b - startColor.b) * ratio)
+      const color = (r << 16) | (g << 8) | b
+      
+      const y = (height / steps) * i
+      const rectHeight = height / steps + 1 // 少し重ねて滑らかに
+      
+      this.backgroundGraphics.beginFill(color, 1.0)
+      this.backgroundGraphics.drawRect(0, y, width, rectHeight)
+      this.backgroundGraphics.endFill()
+    }
+    
+    // 背景を最背面に配置
+    this.app.stage.addChildAt(this.backgroundGraphics, 0)
   }
 }
 
