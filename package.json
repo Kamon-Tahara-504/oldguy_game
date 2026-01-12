@@ -3,6 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "license": "MIT",
+  "author": "Kamon-Tahara-504",
   "scripts": {},
   "devDependencies": {},
   "dependencies": {}

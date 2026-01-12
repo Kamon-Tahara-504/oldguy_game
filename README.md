@@ -94,5 +94,6 @@ oldguy_game/
 │
 ├── index.html                   # HTMLエントリーポイント
 ├── package.json                 # プロジェクト設定
+├── LICENSE                      # MITライセンス
 └── README.md                    # このファイル
 ```
