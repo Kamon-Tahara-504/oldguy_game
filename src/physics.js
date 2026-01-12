@@ -11,6 +11,9 @@ export const GAME_CONFIG = {
   boxMarginRight: 175,   // 右側のマージン（正方形に近づけるため）
   boxMarginTop: 100,    // 上部のマージン（UI用）
   // 箱の範囲は動的に計算される（game.jsで設定）
+  // 固定箱サイズ（画面サイズに関わらず同じサイズ）
+  BOX_WIDTH: 1200,  // 箱の幅（固定）
+  BOX_HEIGHT: 800, // 箱の高さ（固定）
 }
 
 // ボールレベルの定義

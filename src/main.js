@@ -30,12 +30,14 @@ async function init() {
   container.appendChild(app.canvas)
 
   // ゲームを開始（動的サイズを渡す）
-  new Game(app, Matter, PIXI)
+  const game = new Game(app, Matter, PIXI)
 
   // リサイズイベントに対応
   window.addEventListener('resize', () => {
     const newSize = getScreenSize()
     app.renderer.resize(newSize.width, newSize.height)
+    // 箱の位置を再計算して描画を更新
+    game.handleResize()
   })
 }
 
