@@ -133,6 +133,9 @@ export class Game {
     // 雲を更新（パララックス効果）
     this.renderer.updateClouds()
     
+    // UI要素を最前面に配置（ボールより前面に表示）
+    this.renderer.ensureUIFront()
+    
     // 落下中のボールのfallCompleteフラグを更新（合体後のボール用）
     // 注: fallCompleteは物理エンジンの動作を妨げないフラグとして使用
     // ボールが完全に停止するまで待つ（より緩和した条件）

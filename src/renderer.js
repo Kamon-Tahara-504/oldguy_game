@@ -58,4 +58,15 @@ export class Renderer {
   updateClouds() {
     this.cloudRenderer.update()
   }
+
+  // UI要素を最前面に配置（ボールより前面に表示）
+  ensureUIFront() {
+    // スコア表示を最前面に配置
+    if (this.uiRenderer.scoreContainer && this.uiRenderer.scoreContainer.parent) {
+      this.app.stage.setChildIndex(this.uiRenderer.scoreContainer, this.app.stage.children.length - 1)
+    }
+    
+    // プレビュー表示も最前面に配置（既にupdate()で再作成されているが、念のため）
+    // プレビューはupdate()で毎回再作成されるため、通常は最前面に配置される
+  }
 }
