@@ -4,6 +4,8 @@ import { GameState } from './game/gameState.js'
 import { GameInitializer } from './game/gameInitializer.js'
 import { GameOverChecker } from './game/gameOverChecker.js'
 import { createGround, createWalls } from './physics.js'
+import { PhysicsUpdater } from './game/physicsUpdater.js'
+import { GameUpdater } from './game/gameUpdater.js'
 
 export class Game {
   constructor(app, Matter, PIXI) {
@@ -31,31 +33,8 @@ export class Game {
     // ゲームループ
     this.app.ticker.add((ticker) => {
       if (!this.state.isGameOver) {
-        // 物理エンジンの更新前に、落下前のボールの位置と速度をリセット
-        if (this.state.currentBall && !this.state.currentBall.isFalling) {
-          const ball = this.state.currentBall
-          // 静的ボディとして確実に設定
-          this.Matter.Body.setStatic(ball.body, true)
-          // Graphicsの位置をBodyに反映
-          this.Matter.Body.setPosition(ball.body, {
-            x: ball.graphics.x,
-            y: ball.graphics.y
-          })
-          // 速度を0にリセット
-          this.Matter.Body.setVelocity(ball.body, { x: 0, y: 0 })
-          this.Matter.Body.setAngularVelocity(ball.body, 0)
-          
-          // アニメーション中は衝突を無効化（念のため）
-          if (ball.isAnimating) {
-            this.Matter.Body.set(ball.body, {
-              collisionFilter: {
-                group: 0,
-                category: 0x0001,
-                mask: 0x0000  // 衝突を無効化
-              }
-            })
-          }
-        }
+        // 物理エンジンの更新前の準備処理（物理エンジン更新前処理を分離）
+        PhysicsUpdater.preparePhysicsUpdate(this)
         
         // 物理エンジンを更新（固定のタイムステップを使用）
         const deltaTime = 1000 / 60 // 60FPSを想定
@@ -151,54 +130,7 @@ export class Game {
   }
 
   update() {
-    // すべてのボールの位置を同期
-    this.state.balls.forEach(ball => {
-      ball.update()
-    })
-
-    // 現在のボールの位置を同期
-    if (this.state.currentBall) {
-      // 落下前のボールはGraphicsの位置でBodyを制御（Ball.update()で処理）
-      this.state.currentBall.update()
-      
-      // アニメーションを更新
-      if (this.state.currentBall.isAnimating) {
-        this.state.currentBall.updateAnimation()
-      }
-    }
-    
-    // 落下軌道を更新（ボールが落下していない時のみ）
-    if (this.state.currentBall && !this.state.currentBall.isFalling && !this.state.isGameOver) {
-      this.renderer.updateTrajectory()
-    }
-    
-    // 雲を更新（パララックス効果）
-    this.renderer.updateClouds()
-    
-    // 昇天エフェクトを更新
-    this.renderer.updateAscendEffect()
-    
-    // UI要素を最前面に配置（ボールより前面に表示）
-    this.renderer.ensureUIFront()
-    
-    // 落下中のボールのfallCompleteフラグを更新（合体後のボール用）
-    // 注: fallCompleteは物理エンジンの動作を妨げないフラグとして使用
-    // ボールが完全に停止するまで待つ（より緩和した条件）
-    for (const ball of this.state.balls) {
-      if (ball.isFalling && !ball.fallComplete) {
-        const body = ball.body
-        const velocity = Math.abs(body.velocity.x) + Math.abs(body.velocity.y)
-        const angularVelocity = Math.abs(body.angularVelocity)
-        const isGrounded = body.position.y >= this.gameConfig.groundY - ball.radius - 10
-        
-        // 速度と角速度が非常に小さい場合（ほぼ完全停止）かつ地面に到達している場合のみ、落下完了とみなす
-        // 値は0.05に下げて、より完全に停止するまで待つ
-        // ただし、fallComplete後も物理エンジンの影響を受け続ける（ball.jsのupdate関数で処理）
-        if (velocity < 0.05 && angularVelocity < 0.05 && isGrounded) {
-          ball.fallComplete = true
-          // isFallingはtrueのままにしておく（物理エンジンの動作を妨げないため）
-        }
-      }
-    }
+    // すべての更新処理を実行（update()メソッドの責務を分離）
+    GameUpdater.update(this)
   }
 }

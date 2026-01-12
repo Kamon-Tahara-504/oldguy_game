@@ -1,5 +1,7 @@
 import { Ball } from './ball.js'
 import { BALL_LEVELS, GAME_CONFIG } from './physics.js'
+import { BallPositionClamper } from './utils/ballPositionClamper.js'
+import { BallPhysicsConfigurator } from './ball/physicsConfigurator.js'
 
 export class BallManager {
   constructor(game, engine, Matter, PIXI) {
@@ -16,23 +18,11 @@ export class BallManager {
     // 現在のマウス位置を使用（最新の位置を反映）
     const levelData = BALL_LEVELS[this.game.nextBallLevel]
     const ballRadius = levelData.radius
-    // マウス位置が箱の範囲内にあることを確認（ボールの半径と壁の厚さを考慮）
-    const boxLeft = this.game.gameConfig.boxLeft
-    const boxRight = this.game.gameConfig.boxRight
-    const wallThickness = GAME_CONFIG.WALL_THICKNESS
-    // ボールが箱の範囲内に収まり、壁に触れないように制限
-    const clampedMouseX = Math.max(
-      boxLeft + wallThickness + ballRadius,
-      Math.min(
-        boxRight - wallThickness - ballRadius,
-        this.game.mouseX || (boxLeft + boxRight) / 2
-      )
-    )
-    const startX = clampedMouseX
-    // ボールの生成位置を箱の上端より上（箱の外）に設定
-    // 箱の上端より50px上から落下させる
-    const boxTop = this.game.gameConfig.boxTop || 100
-    const startY = boxTop - 50
+    // ボールの生成位置を計算（位置のクランプ処理を共通化）
+    const mouseX = this.game.mouseX || (this.game.gameConfig.boxLeft + this.game.gameConfig.boxRight) / 2
+    const spawnPosition = BallPositionClamper.calculateSpawnPosition(mouseX, ballRadius, this.game.gameConfig)
+    const startX = spawnPosition.x
+    const startY = spawnPosition.y
 
     this.game.currentBall = new Ball(
       this.engine,
@@ -49,7 +39,7 @@ export class BallManager {
     this.game.currentBall.fallComplete = false // 落下完了フラグをリセット
     
     // 静的ボディとして設定（物理エンジンの影響を受けない）
-    this.Matter.Body.setStatic(this.game.currentBall.body, true)
+    BallPhysicsConfigurator.configureBodyForSpawn(this.game.currentBall.body, this.Matter)
     
     // Graphicsの位置を設定（Bodyは後で同期される）
     this.game.currentBall.graphics.x = startX
@@ -80,45 +70,23 @@ export class BallManager {
     }
 
     // 最新のマウス位置でGraphicsを更新（念のため）
-    // 箱の範囲内に収まるように調整（ボールの半径と壁の厚さを考慮）
-    const boxLeft = this.game.gameConfig.boxLeft
-    const boxRight = this.game.gameConfig.boxRight
+    // 箱の範囲内に収まるように調整（位置のクランプ処理を共通化）
     const ballRadius = this.game.currentBall.radius
-    const wallThickness = GAME_CONFIG.WALL_THICKNESS
-    // ボールが箱の範囲内に収まり、壁に触れないように制限
-    const xClamped = Math.max(
-      boxLeft + wallThickness + ballRadius,
-      Math.min(boxRight - wallThickness - ballRadius, this.game.mouseX)
-    )
-    // ボールの位置を箱の上端より上（箱の外）に設定
-    const boxTop = this.game.gameConfig.boxTop || 100
-    const fixedY = boxTop - 50
-    this.game.currentBall.graphics.x = xClamped
-    this.game.currentBall.graphics.y = fixedY
+    const spawnPosition = BallPositionClamper.calculateSpawnPosition(this.game.mouseX, ballRadius, this.game.gameConfig)
+    this.game.currentBall.graphics.x = spawnPosition.x
+    this.game.currentBall.graphics.y = spawnPosition.y
 
     // Graphicsの現在位置を取得
     const currentX = this.game.currentBall.graphics.x
     const currentY = this.game.currentBall.graphics.y
 
-    // まず静的ボディから動的ボディに変更（変換時に位置がリセットされる可能性があるため）
-    this.Matter.Body.setStatic(this.game.currentBall.body, false)
-    
-    // 変換後、位置を確実に設定（複数回設定して確実にする）
-    this.Matter.Body.setPosition(this.game.currentBall.body, { x: currentX, y: currentY })
-    
-    // Bodyの速度と角速度を0にリセット
-    this.Matter.Body.setVelocity(this.game.currentBall.body, { x: 0, y: 0 })
-    this.Matter.Body.setAngularVelocity(this.game.currentBall.body, 0)
-    
-    // 重力を有効化
-    this.Matter.Body.set(this.game.currentBall.body, { gravityScale: 1 })
-    
-    // Bodyの位置を再度設定（確実にするため）
-    this.Matter.Body.setPosition(this.game.currentBall.body, { x: currentX, y: currentY })
-    
-    // Bodyをスリープ状態から解除（スリープしていると動かない）
-    this.Matter.Body.set(this.game.currentBall.body, { sleepThreshold: Infinity })
-    this.Matter.Sleeping.set(this.game.currentBall.body, false)
+    // 動的ボディとして設定（物理エンジン設定処理を共通化）
+    BallPhysicsConfigurator.configureBodyForFall(
+      this.game.currentBall.body,
+      this.Matter,
+      currentX,
+      currentY
+    )
     
     // 落下開始
     this.game.currentBall.startFall()
