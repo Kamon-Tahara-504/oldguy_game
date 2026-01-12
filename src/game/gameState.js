@@ -15,6 +15,7 @@ export class GameState {
     this.highScore = loadHighScore()
     this.lastBallDropTime = 0
     this.ballDropCooldown = 400 // 400ms（アニメーション時間と統一）
+    this.gameStartTime = null // ゲーム開始時刻（タイムスタンプ）
   }
 
   // スコアを追加
@@ -32,6 +33,19 @@ export class GameState {
     }
   }
 
+  // ゲーム開始時にタイマーを開始
+  startGame() {
+    this.gameStartTime = Date.now()
+  }
+
+  // 経過時間を取得（ミリ秒）
+  getElapsedTime() {
+    if (!this.gameStartTime) {
+      return 0
+    }
+    return Date.now() - this.gameStartTime
+  }
+
   // 状態をリセット
   reset() {
     this.balls = []
@@ -41,6 +55,7 @@ export class GameState {
     this.nextBallLevel = 1
     this.nextNextBallLevel = Math.floor(Math.random() * 4) + 1
     this.lastBallDropTime = 0
+    this.gameStartTime = null
   }
 }
 

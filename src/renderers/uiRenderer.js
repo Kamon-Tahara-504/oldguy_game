@@ -8,6 +8,7 @@ export class UIRenderer {
     this.scoreContainer = null
     this.scoreText = null
     this.highScoreText = null
+    this.timeText = null
   }
 
   // スコア表示を初期化
@@ -18,7 +19,7 @@ export class UIRenderer {
     // 背景パネル（カード形式）
     const panelPadding = 20
     const panelWidth = 200
-    const panelHeight = 100
+    const panelHeight = 130 // 時間表示用に高さを増やす
     const panelX = 20
     const panelY = 20
     
@@ -35,6 +36,17 @@ export class UIRenderer {
     this.scoreContainer.addChild(shadow)
     this.scoreContainer.addChild(panel)
     
+    // 時間表示（Scoreの上に配置、同じサイズ）
+    this.timeText = new this.PIXI.Text('Time: 00:00', {
+      fontFamily: 'Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif',
+      fontSize: 28,
+      fill: 0x2c3e50, // ダークグレー（Scoreと同じ色）
+      fontWeight: '600',
+    })
+    this.timeText.x = panelPadding
+    this.timeText.y = panelPadding
+    this.scoreContainer.addChild(this.timeText)
+    
     // スコアテキスト
     this.scoreText = new this.PIXI.Text(`Score: ${this.game.score}`, {
       fontFamily: 'Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif',
@@ -43,7 +55,7 @@ export class UIRenderer {
       fontWeight: '600',
     })
     this.scoreText.x = panelPadding
-    this.scoreText.y = panelPadding
+    this.scoreText.y = panelPadding + this.timeText.height + 8
     this.scoreContainer.addChild(this.scoreText)
     
     // ハイスコア表示
@@ -54,7 +66,7 @@ export class UIRenderer {
       fontWeight: '400',
     })
     this.highScoreText.x = panelPadding
-    this.highScoreText.y = panelPadding + this.scoreText.height + 8
+    this.highScoreText.y = panelPadding + this.timeText.height + this.scoreText.height + 16
     this.scoreContainer.addChild(this.highScoreText)
     
     this.scoreContainer.x = panelX
@@ -65,6 +77,14 @@ export class UIRenderer {
     this.app.stage.setChildIndex(this.scoreContainer, this.app.stage.children.length - 1)
   }
 
+  // 経過時間を「MM:SS」形式にフォーマット
+  formatTime(milliseconds) {
+    const totalSeconds = Math.floor(milliseconds / 1000)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  }
+
   // スコア表示を更新
   update() {
     if (this.scoreText) {
@@ -73,6 +93,12 @@ export class UIRenderer {
     // ハイスコアも更新
     if (this.highScoreText) {
       this.highScoreText.text = `High: ${this.game.highScore}`
+    }
+    // 時間表示を更新
+    if (this.timeText) {
+      const elapsedTime = this.game.state.getElapsedTime()
+      const formattedTime = this.formatTime(elapsedTime)
+      this.timeText.text = `Time: ${formattedTime}`
     }
     
     // スコア表示を最前面に配置（ボールより前面に表示）
