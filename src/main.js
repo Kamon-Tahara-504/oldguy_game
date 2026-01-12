@@ -31,12 +31,12 @@ async function init() {
 
   // ボール画像を読み込む
   const ballImagePaths = [
-    '/boy1.png',
-    '/boy2.png',
-    '/boy3.png',
-    '/boy4.png',
-    '/boy5.png',
-    '/boy6.png'
+    './assets/boy1.png',
+    './assets/boy2.png',
+    './assets/boy3.png',
+    './assets/boy4.png',
+    './assets/boy5.png',
+    './assets/boy6.png'
   ]
   
   try {
