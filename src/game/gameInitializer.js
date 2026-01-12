@@ -40,21 +40,28 @@ export class GameInitializer {
   }
 
   initializeGameConfig() {
+    // 固定箱サイズ
+    const BOX_WIDTH = GAME_CONFIG.BOX_WIDTH
+    const BOX_HEIGHT = GAME_CONFIG.BOX_HEIGHT
+    
+    // 箱を画面中央に配置
+    const boxLeft = (this.game.gameWidth - BOX_WIDTH) / 2
+    const boxRight = boxLeft + BOX_WIDTH
+    const boxTop = (this.game.gameHeight - BOX_HEIGHT) / 2
+    const boxBottom = boxTop + BOX_HEIGHT
+
     // 動的サイズの設定を作成（保存して後で使用）
     this.game.gameConfig = {
       ...GAME_CONFIG,
       width: this.game.gameWidth,
       height: this.game.gameHeight,
-      groundY: this.game.gameHeight - 50, // 地面の位置を動的に調整
+      groundY: boxBottom, // 箱の下端を地面の位置に
+      boxLeft: boxLeft,
+      boxRight: boxRight,
+      boxTop: boxTop,
+      boxBottom: boxBottom,
+      boxTopY: boxTop, // 箱の上端Y座標（ゲームオーバー判定用）
     }
-
-    // 箱の範囲を計算（画面内に配置）
-    this.game.gameConfig.boxLeft = GAME_CONFIG.boxMarginLeft || 20
-    this.game.gameConfig.boxRight = this.game.gameWidth - (GAME_CONFIG.boxMarginRight || 20)
-    this.game.gameConfig.boxTop = GAME_CONFIG.boxMarginTop || 100
-    this.game.gameConfig.boxBottom = this.game.gameConfig.groundY
-    // 箱の上端Y座標（ゲームオーバー判定用）
-    this.game.gameConfig.boxTopY = this.game.gameConfig.boxTop
   }
 
   initializeGroundAndWalls() {

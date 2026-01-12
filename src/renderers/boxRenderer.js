@@ -7,12 +7,17 @@ export class BoxRenderer {
     this.PIXI = PIXI
     this.backgroundGraphics = null
     this.groundGraphics = null
+    this.groundShadow = null
     this.wallGraphics = []
+    this.wallShadows = []
     this.boxTopGraphics = null
   }
 
   // 地面と壁の描画を初期化
   init(walls) {
+    // 既存の描画をクリーンアップ
+    this.cleanup()
+    
     // 背景にグラデーションを追加
     this.drawGradientBackground()
     // 箱の範囲を取得
@@ -33,11 +38,11 @@ export class BoxRenderer {
     this.groundGraphics = new this.PIXI.Graphics()
     
     // 地面の影
-    const groundShadow = new this.PIXI.Graphics()
-    groundShadow.beginFill(0x000000, 0.15)
-    groundShadow.drawRect(boxLeft, boxBottom - 8, boxRight - boxLeft, 18)
-    groundShadow.endFill()
-    this.app.stage.addChild(groundShadow)
+    this.groundShadow = new this.PIXI.Graphics()
+    this.groundShadow.beginFill(0x000000, 0.15)
+    this.groundShadow.drawRect(boxLeft, boxBottom - 8, boxRight - boxLeft, 18)
+    this.groundShadow.endFill()
+    this.app.stage.addChild(this.groundShadow)
     
     // 地面のグラデーション（簡易版）
     this.groundGraphics.beginFill(0xecf0f1) // ライトグレー
@@ -51,6 +56,7 @@ export class BoxRenderer {
     this.app.stage.addChild(this.groundGraphics)
 
     // 箱の側面（左右の壁）を描画
+    this.wallShadows = []
     walls.forEach((wall, index) => {
       const wallGraphics = new this.PIXI.Graphics()
       
@@ -65,6 +71,7 @@ export class BoxRenderer {
       )
       wallShadow.endFill()
       this.app.stage.addChild(wallShadow)
+      this.wallShadows.push(wallShadow)
       
       wallGraphics.beginFill(0xecf0f1) // ライトグレー
       wallGraphics.lineStyle(1, 0xbdc3c7, 0.3) // 薄い境界線
@@ -78,6 +85,54 @@ export class BoxRenderer {
       this.app.stage.addChild(wallGraphics)
       this.wallGraphics.push(wallGraphics)
     })
+  }
+
+  // 既存の描画をクリーンアップ
+  cleanup() {
+    // 上端ラインを削除
+    if (this.boxTopGraphics) {
+      if (this.boxTopGraphics.parent) {
+        this.app.stage.removeChild(this.boxTopGraphics)
+      }
+      this.boxTopGraphics.destroy()
+      this.boxTopGraphics = null
+    }
+
+    // 地面の影を削除
+    if (this.groundShadow) {
+      if (this.groundShadow.parent) {
+        this.app.stage.removeChild(this.groundShadow)
+      }
+      this.groundShadow.destroy()
+      this.groundShadow = null
+    }
+
+    // 地面を削除
+    if (this.groundGraphics) {
+      if (this.groundGraphics.parent) {
+        this.app.stage.removeChild(this.groundGraphics)
+      }
+      this.groundGraphics.destroy()
+      this.groundGraphics = null
+    }
+
+    // 壁の影を削除
+    this.wallShadows.forEach(wallShadow => {
+      if (wallShadow && wallShadow.parent) {
+        this.app.stage.removeChild(wallShadow)
+        wallShadow.destroy()
+      }
+    })
+    this.wallShadows = []
+
+    // 壁を削除
+    this.wallGraphics.forEach(wallGraphics => {
+      if (wallGraphics && wallGraphics.parent) {
+        this.app.stage.removeChild(wallGraphics)
+        wallGraphics.destroy()
+      }
+    })
+    this.wallGraphics = []
   }
 
   // グラデーション背景を描画

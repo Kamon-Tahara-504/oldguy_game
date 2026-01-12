@@ -78,6 +78,36 @@ export class Game {
     this.gameRestart.restart()
   }
 
+  // リサイズ処理
+  handleResize() {
+    // 画面サイズを更新
+    this.gameWidth = this.app.screen.width
+    this.gameHeight = this.app.screen.height
+
+    // 固定箱サイズ
+    const BOX_WIDTH = this.gameConfig.BOX_WIDTH
+    const BOX_HEIGHT = this.gameConfig.BOX_HEIGHT
+    
+    // 箱を画面中央に再配置
+    const boxLeft = (this.gameWidth - BOX_WIDTH) / 2
+    const boxRight = boxLeft + BOX_WIDTH
+    const boxTop = (this.gameHeight - BOX_HEIGHT) / 2
+    const boxBottom = boxTop + BOX_HEIGHT
+
+    // 箱の位置を更新
+    this.gameConfig.width = this.gameWidth
+    this.gameConfig.height = this.gameHeight
+    this.gameConfig.groundY = boxBottom
+    this.gameConfig.boxLeft = boxLeft
+    this.gameConfig.boxRight = boxRight
+    this.gameConfig.boxTop = boxTop
+    this.gameConfig.boxBottom = boxBottom
+    this.gameConfig.boxTopY = boxTop
+
+    // 描画を更新（箱、壁、地面の描画を再描画）
+    this.renderer.boxRenderer.init(this.walls)
+  }
+
   update() {
     // すべてのボールの位置を同期
     this.state.balls.forEach(ball => {
