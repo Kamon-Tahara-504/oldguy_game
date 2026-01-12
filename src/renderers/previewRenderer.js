@@ -24,6 +24,7 @@ export class PreviewRenderer {
     const previewY = 50
     const previewSpacing = 80 // プレビュー間の間隔
     const panelPadding = 15
+    const FIXED_PREVIEW_RADIUS = 25 // 全てのプレビューで同じサイズ
 
     // 背景パネル（カード形式）
     const panelWidth = 180
@@ -48,33 +49,10 @@ export class PreviewRenderer {
     this.app.stage.addChild(panel)
     this.previewGraphics.push(panel)
 
-    // 次の次のボールのプレビュー（左側）
-    const nextNextLevelData = BALL_LEVELS[this.game.nextNextBallLevel]
-    const nextNextPreviewRadius = nextNextLevelData.radius * 0.5
-    const nextNextPreviewX = panelX + panelWidth / 2 - previewSpacing / 2
-
-    const nextNextPreview = new this.PIXI.Graphics()
-    
-    // 影を追加
-    const nextNextShadow = new this.PIXI.Graphics()
-    nextNextShadow.beginFill(0x000000, 0.2)
-    nextNextShadow.drawCircle(2, 2, nextNextPreviewRadius)
-    nextNextShadow.endFill()
-    nextNextPreview.addChild(nextNextShadow)
-    
-    nextNextPreview.beginFill(nextNextLevelData.color)
-    nextNextPreview.lineStyle(1, 0xffffff, 0.3) // 薄い白のストローク
-    nextNextPreview.drawCircle(0, 0, nextNextPreviewRadius)
-    nextNextPreview.endFill()
-    nextNextPreview.x = nextNextPreviewX
-    nextNextPreview.y = panelY + panelHeight / 2
-    this.app.stage.addChild(nextNextPreview)
-    this.previewGraphics.push(nextNextPreview)
-
-    // 次のボールのプレビュー（右側）
+    // 次のボールのプレビュー（左側）
     const nextLevelData = BALL_LEVELS[this.game.nextBallLevel]
-    const nextPreviewRadius = nextLevelData.radius * 0.5
-    const nextPreviewX = panelX + panelWidth / 2 + previewSpacing / 2
+    const nextPreviewRadius = FIXED_PREVIEW_RADIUS // 固定サイズ
+    const nextPreviewX = panelX + panelWidth / 2 - previewSpacing / 2
 
     const nextPreview = new this.PIXI.Graphics()
     
@@ -93,6 +71,29 @@ export class PreviewRenderer {
     nextPreview.y = panelY + panelHeight / 2
     this.app.stage.addChild(nextPreview)
     this.previewGraphics.push(nextPreview)
+
+    // 次の次のボールのプレビュー（右側）
+    const nextNextLevelData = BALL_LEVELS[this.game.nextNextBallLevel]
+    const nextNextPreviewRadius = FIXED_PREVIEW_RADIUS // 固定サイズ
+    const nextNextPreviewX = panelX + panelWidth / 2 + previewSpacing / 2
+
+    const nextNextPreview = new this.PIXI.Graphics()
+    
+    // 影を追加
+    const nextNextShadow = new this.PIXI.Graphics()
+    nextNextShadow.beginFill(0x000000, 0.2)
+    nextNextShadow.drawCircle(2, 2, nextNextPreviewRadius)
+    nextNextShadow.endFill()
+    nextNextPreview.addChild(nextNextShadow)
+    
+    nextNextPreview.beginFill(nextNextLevelData.color)
+    nextNextPreview.lineStyle(1, 0xffffff, 0.3) // 薄い白のストローク
+    nextNextPreview.drawCircle(0, 0, nextNextPreviewRadius)
+    nextNextPreview.endFill()
+    nextNextPreview.x = nextNextPreviewX
+    nextNextPreview.y = panelY + panelHeight / 2
+    this.app.stage.addChild(nextNextPreview)
+    this.previewGraphics.push(nextNextPreview)
   }
 }
 
