@@ -25,6 +25,10 @@ export class Ball {
     this.radius = levelData.radius
     this.color = levelData.color
     this.score = levelData.score
+    this.imagePath = levelData.imagePath
+    this.imageOffsetX = levelData.imageOffsetX || 0
+    this.imageOffsetY = levelData.imageOffsetY || 0
+    this.imageScale = levelData.imageScale || 1.0
 
     // Matter.js Bodyを作成
     this.body = Matter.Bodies.circle(x, y, this.radius, {
@@ -38,12 +42,57 @@ export class Ball {
     // エンジンに追加
     Matter.World.add(engine.world, this.body)
 
-    // PixiJS Graphicsを作成
-    this.graphics = new PIXI.Graphics()
-    this.graphics.beginFill(this.color)
-    this.graphics.lineStyle(2, 0x000000)
-    this.graphics.drawCircle(0, 0, this.radius)
-    this.graphics.endFill()
+    // コンテナを作成（ボール背景と画像を管理）
+    this.graphics = new PIXI.Container()
+    
+    // 円形ボール（背景）を作成（元の色を使用）
+    const ballBackground = new PIXI.Graphics()
+    ballBackground.beginFill(this.color) // 元のボールの色
+    ballBackground.lineStyle(2, 0x000000) // 黒い枠線
+    ballBackground.drawCircle(0, 0, this.radius)
+    ballBackground.endFill()
+    this.graphics.addChild(ballBackground)
+    
+    // PixiJS Spriteを作成（画像を使用）
+    const texture = PIXI.Texture.from(this.imagePath)
+    const sprite = new PIXI.Sprite(texture)
+    
+    // テクスチャのサイズを使用してスケールを計算
+    const updateSpriteScale = () => {
+      // baseTextureのサイズを使用（読み込み前でも利用可能）
+      const textureWidth = texture.baseTexture.width || texture.baseTexture.realWidth || 100
+      const textureHeight = texture.baseTexture.height || texture.baseTexture.realHeight || 100
+      
+      if (textureWidth > 0 && textureHeight > 0) {
+        // ボールの半径に合わせて画像をスケール（少し小さくして余白を作る）
+        const targetSize = this.radius * 1.8 // ボールより少し小さく
+        const baseScale = targetSize / Math.max(textureWidth, textureHeight)
+        sprite.scale.set(baseScale * this.imageScale)
+      }
+    }
+    
+    // テクスチャが読み込まれていない場合の処理
+    if (!texture.baseTexture.valid) {
+      texture.baseTexture.on('loaded', () => {
+        updateSpriteScale()
+      })
+    }
+    
+    // 即座にスケールを設定（baseTextureのサイズは読み込み前でも利用可能）
+    updateSpriteScale()
+    
+    // アンカーを中心に設定（回転の中心点）
+    sprite.anchor.set(0.5)
+    
+    // 画像の位置オフセットを適用
+    sprite.x = this.imageOffsetX
+    sprite.y = this.imageOffsetY
+    
+    // 画像をボールの上に配置（背景の上）
+    this.graphics.addChild(sprite)
+    
+    this.sprite = sprite // 後でアニメーションで使用するため保存
+    
     container.addChild(this.graphics)
   }
 
@@ -59,7 +108,7 @@ export class Ball {
     this.isAnimating = true
     this.animationStartTime = Date.now()
     
-    // 初期状態を設定
+    // コンテナ全体をアニメーション（白色ボールと画像の両方）
     this.graphics.scale.set(0.3)
     this.graphics.alpha = 0
   }
@@ -77,7 +126,7 @@ export class Ball {
     const progress = Math.min(elapsed / this.animationDuration, 1.0)
     const easedProgress = this.easeOut(progress)
 
-    // スケールと透明度を更新
+    // スケールと透明度を更新（コンテナ全体をアニメーション）
     const scale = 0.3 + (1.0 - 0.3) * easedProgress
     const alpha = 0 + (1.0 - 0) * easedProgress
 
