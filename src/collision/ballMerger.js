@@ -1,5 +1,7 @@
 import { Ball } from '../ball.js'
 import { BALL_LEVELS, ASCEND_SCORE } from '../physics.js'
+import { MergePositionCalculator } from './mergePositionCalculator.js'
+import { MergedBallCreator } from './mergedBallCreator.js'
 
 export class BallMerger {
   constructor(game, Matter, positionResolver) {
@@ -30,30 +32,16 @@ export class BallMerger {
     // 新しいボールの半径を取得
     const newRadius = BALL_LEVELS[newLevel].radius
 
-    // 箱の範囲を取得
-    const boxLeft = this.game.gameConfig.boxLeft
-    const boxRight = this.game.gameConfig.boxRight
-    const boxTop = this.game.gameConfig.boxTop
-    const boxBottom = this.game.gameConfig.boxBottom || this.game.gameConfig.groundY
-
-    // 合体位置を計算
-    // X座標: 2つのボールの中点（箱の範囲内に収める）
-    let mergeX = (ball1.body.position.x + ball2.body.position.x) / 2
-    mergeX = Math.max(
-      boxLeft + newRadius,
-      Math.min(boxRight - newRadius, mergeX)
+    // 合体位置を計算（合体位置計算処理を分離）
+    const mergePosition = MergePositionCalculator.calculateMergePosition(
+      ball1,
+      ball2,
+      newRadius,
+      this.game.gameConfig,
+      this.positionResolver
     )
-    
-    // Y座標: 2つのボールの中点（自然な位置）
-    let mergeY = (ball1.body.position.y + ball2.body.position.y) / 2
-    
-    // 箱の範囲内に収める
-    const minY = boxTop + newRadius // 箱の上端より上にはならない
-    const maxY = boxBottom - newRadius // 地面より下にはならない
-    mergeY = Math.max(minY, Math.min(maxY, mergeY))
-    
-    // 合体位置が既存のボールと重ならないように、適切な位置を探索
-    mergeY = this.positionResolver.findValidMergePosition(mergeX, mergeY, newRadius, ball1, ball2)
+    const mergeX = mergePosition.x
+    const mergeY = mergePosition.y
 
     // スコア加算
     const scoreToAdd = BALL_LEVELS[newLevel].score
@@ -64,9 +52,9 @@ export class BallMerger {
     this.game.ballManager.removeBall(ball2)
 
     // 新しいレベルのボールを生成
-    const newBall = new Ball(
-      this.game.engine,
-      this.game.app.stage,
+    // 新しいボールを作成（合体後のボール生成処理を分離）
+    const newBall = MergedBallCreator.createMergedBall(
+      this.game,
       mergeX,
       mergeY,
       newLevel,
@@ -74,17 +62,6 @@ export class BallMerger {
       this.game.PIXI
     )
     
-    // 合体直後は一時的に静的ボディとして設定（位置が確定するまで）
-    this.Matter.Body.setStatic(newBall.body, true)
-    
-    // 位置を確実に設定
-    this.Matter.Body.setPosition(newBall.body, { x: mergeX, y: mergeY })
-    
-    // Graphicsの位置も同期
-    newBall.graphics.x = mergeX
-    newBall.graphics.y = mergeY
-    
-    newBall.isFalling = true // 落下中フラグを設定
     newBall.isMerging = true // 合体直後フラグを設定（ゲームオーバー判定から除外）
     newBall.fallStartTime = Date.now() // 落下開始時刻を記録（合体後のボールも落下中）
     this.game.balls.push(newBall)
@@ -92,21 +69,10 @@ export class BallMerger {
     // 合体後のボールが既存のボールと重ならないように位置調整
     this.positionResolver.resolveOverlaps(newBall)
     
-    // 位置が確定したら、動的ボディに変更して重力を有効化
-    // 速度と角速度を0にリセット
-    this.Matter.Body.setVelocity(newBall.body, { x: 0, y: 0 })
-    this.Matter.Body.setAngularVelocity(newBall.body, 0)
-    
-    // 静的ボディから動的ボディに変更
-    this.Matter.Body.setStatic(newBall.body, false)
-    
-    // 重力を有効化
-    this.Matter.Body.set(newBall.body, { gravityScale: 1 })
-    
-    // 位置を再度設定（確実にするため）
+    // 位置が確定したら、動的ボディに変更して重力を有効化（合体後のボール生成処理を分離）
     const finalX = newBall.body.position.x
     const finalY = newBall.body.position.y
-    this.Matter.Body.setPosition(newBall.body, { x: finalX, y: finalY })
+    MergedBallCreator.activateMergedBall(newBall, this.game.Matter, finalX, finalY)
     
     // Graphicsの位置も同期
     newBall.graphics.x = finalX
