@@ -29,7 +29,25 @@ async function init() {
   })
   container.appendChild(app.canvas)
 
-  // ゲームを開始（動的サイズを渡す）
+  // ボール画像を読み込む
+  const ballImagePaths = [
+    '/boy1.png',
+    '/boy2.png',
+    '/boy3.png',
+    '/boy4.png',
+    '/boy5.png',
+    '/boy6.png'
+  ]
+  
+  try {
+    await PIXI.Assets.load(ballImagePaths)
+    console.log('Ball images loaded successfully')
+  } catch (error) {
+    console.error('Failed to load ball images:', error)
+    // 画像の読み込みに失敗した場合でもゲームを続行（フォールバック）
+  }
+
+  // ゲームを開始（画像読み込み後に開始）
   const game = new Game(app, Matter, PIXI)
 
   // リサイズイベントに対応

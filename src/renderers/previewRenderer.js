@@ -53,22 +53,33 @@ export class PreviewRenderer {
     const nextLevelData = BALL_LEVELS[this.game.nextBallLevel]
     const nextPreviewRadius = FIXED_PREVIEW_RADIUS // 固定サイズ
     const nextPreviewX = panelX + panelWidth / 2 - previewSpacing / 2
+    const nextPreviewY = panelY + panelHeight / 2
 
-    const nextPreview = new this.PIXI.Graphics()
+    // 円形ボール（背景）を作成（元の色を使用）
+    const nextBallBackground = new this.PIXI.Graphics()
+    nextBallBackground.beginFill(nextLevelData.color) // 元のボールの色
+    nextBallBackground.lineStyle(2, 0x000000) // 黒い枠線
+    nextBallBackground.drawCircle(0, 0, nextPreviewRadius)
+    nextBallBackground.endFill()
+    nextBallBackground.x = nextPreviewX
+    nextBallBackground.y = nextPreviewY
+    this.app.stage.addChild(nextBallBackground)
+    this.previewGraphics.push(nextBallBackground)
+
+    // 画像を使用したプレビュー
+    const nextTexture = this.PIXI.Texture.from(nextLevelData.imagePath)
+    const nextPreview = new this.PIXI.Sprite(nextTexture)
     
-    // 影を追加
-    const nextShadow = new this.PIXI.Graphics()
-    nextShadow.beginFill(0x000000, 0.2)
-    nextShadow.drawCircle(2, 2, nextPreviewRadius)
-    nextShadow.endFill()
-    nextPreview.addChild(nextShadow)
-    
-    nextPreview.beginFill(nextLevelData.color)
-    nextPreview.lineStyle(1, 0xffffff, 0.3) // 薄い白のストローク
-    nextPreview.drawCircle(0, 0, nextPreviewRadius)
-    nextPreview.endFill()
-    nextPreview.x = nextPreviewX
-    nextPreview.y = panelY + panelHeight / 2
+    // サイズを調整（ボールより少し小さく）
+    // baseTextureのサイズを使用（読み込み前でも利用可能）
+    const nextTextureWidth = nextTexture.baseTexture.width || nextTexture.baseTexture.realWidth || 100
+    const nextTextureHeight = nextTexture.baseTexture.height || nextTexture.baseTexture.realHeight || 100
+    const nextTargetSize = nextPreviewRadius * 1.8
+    const nextBaseScale = nextTargetSize / Math.max(nextTextureWidth, nextTextureHeight)
+    nextPreview.scale.set(nextBaseScale * (nextLevelData.imageScale || 1.0))
+    nextPreview.anchor.set(0.5)
+    nextPreview.x = nextPreviewX + (nextLevelData.imageOffsetX || 0) * nextPreview.scale.x
+    nextPreview.y = nextPreviewY + (nextLevelData.imageOffsetY || 0) * nextPreview.scale.y
     this.app.stage.addChild(nextPreview)
     this.previewGraphics.push(nextPreview)
 
@@ -76,22 +87,33 @@ export class PreviewRenderer {
     const nextNextLevelData = BALL_LEVELS[this.game.nextNextBallLevel]
     const nextNextPreviewRadius = FIXED_PREVIEW_RADIUS // 固定サイズ
     const nextNextPreviewX = panelX + panelWidth / 2 + previewSpacing / 2
+    const nextNextPreviewY = panelY + panelHeight / 2
 
-    const nextNextPreview = new this.PIXI.Graphics()
+    // 円形ボール（背景）を作成（元の色を使用）
+    const nextNextBallBackground = new this.PIXI.Graphics()
+    nextNextBallBackground.beginFill(nextNextLevelData.color) // 元のボールの色
+    nextNextBallBackground.lineStyle(2, 0x000000) // 黒い枠線
+    nextNextBallBackground.drawCircle(0, 0, nextNextPreviewRadius)
+    nextNextBallBackground.endFill()
+    nextNextBallBackground.x = nextNextPreviewX
+    nextNextBallBackground.y = nextNextPreviewY
+    this.app.stage.addChild(nextNextBallBackground)
+    this.previewGraphics.push(nextNextBallBackground)
+
+    // 画像を使用したプレビュー
+    const nextNextTexture = this.PIXI.Texture.from(nextNextLevelData.imagePath)
+    const nextNextPreview = new this.PIXI.Sprite(nextNextTexture)
     
-    // 影を追加
-    const nextNextShadow = new this.PIXI.Graphics()
-    nextNextShadow.beginFill(0x000000, 0.2)
-    nextNextShadow.drawCircle(2, 2, nextNextPreviewRadius)
-    nextNextShadow.endFill()
-    nextNextPreview.addChild(nextNextShadow)
-    
-    nextNextPreview.beginFill(nextNextLevelData.color)
-    nextNextPreview.lineStyle(1, 0xffffff, 0.3) // 薄い白のストローク
-    nextNextPreview.drawCircle(0, 0, nextNextPreviewRadius)
-    nextNextPreview.endFill()
-    nextNextPreview.x = nextNextPreviewX
-    nextNextPreview.y = panelY + panelHeight / 2
+    // サイズを調整（ボールより少し小さく）
+    // baseTextureのサイズを使用（読み込み前でも利用可能）
+    const nextNextTextureWidth = nextNextTexture.baseTexture.width || nextNextTexture.baseTexture.realWidth || 100
+    const nextNextTextureHeight = nextNextTexture.baseTexture.height || nextNextTexture.baseTexture.realHeight || 100
+    const nextNextTargetSize = nextNextPreviewRadius * 1.8
+    const nextNextBaseScale = nextNextTargetSize / Math.max(nextNextTextureWidth, nextNextTextureHeight)
+    nextNextPreview.scale.set(nextNextBaseScale * (nextNextLevelData.imageScale || 1.0))
+    nextNextPreview.anchor.set(0.5)
+    nextNextPreview.x = nextNextPreviewX + (nextNextLevelData.imageOffsetX || 0) * nextNextPreview.scale.x
+    nextNextPreview.y = nextNextPreviewY + (nextNextLevelData.imageOffsetY || 0) * nextNextPreview.scale.y
     this.app.stage.addChild(nextNextPreview)
     this.previewGraphics.push(nextNextPreview)
   }
