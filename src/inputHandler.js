@@ -1,3 +1,5 @@
+import { GAME_CONFIG } from './physics.js'
+
 export class InputHandler {
   constructor(game, app) {
     this.game = game
@@ -24,15 +26,16 @@ export class InputHandler {
     
     // ボールが存在し、まだ落下していない場合、位置を更新
     if (this.game.currentBall && !this.game.currentBall.isFalling && !this.game.isGameOver) {
-      // 箱の範囲内に制限（ボールの半径を考慮）
+      // 箱の範囲内に制限（ボールの半径と壁の厚さを考慮）
       const boxLeft = this.game.gameConfig.boxLeft
       const boxRight = this.game.gameConfig.boxRight
       const ballRadius = this.game.currentBall.radius
+      const wallThickness = GAME_CONFIG.WALL_THICKNESS
       
-      // ボールが箱の範囲内に収まるように制限
+      // ボールが箱の範囲内に収まり、壁に触れないように制限
       const xClamped = Math.max(
-        boxLeft + ballRadius,
-        Math.min(boxRight - ballRadius, this.game.mouseX)
+        boxLeft + wallThickness + ballRadius,
+        Math.min(boxRight - wallThickness - ballRadius, this.game.mouseX)
       )
       
       const boxTop = this.game.gameConfig.boxTop || 100
@@ -66,15 +69,16 @@ export class InputHandler {
     
     // ボールが落下していない場合は常にマウスに追従（Graphicsのみ制御）
     if (this.game.currentBall && !this.game.currentBall.isFalling && !this.game.isGameOver) {
-      // 箱の範囲内に制限（ボールの半径を考慮）
+      // 箱の範囲内に制限（ボールの半径と壁の厚さを考慮）
       const boxLeft = this.game.gameConfig.boxLeft
       const boxRight = this.game.gameConfig.boxRight
       const ballRadius = this.game.currentBall.radius
+      const wallThickness = GAME_CONFIG.WALL_THICKNESS
       
-      // ボールが箱の範囲内に収まるように制限
+      // ボールが箱の範囲内に収まり、壁に触れないように制限
       const xClamped = Math.max(
-        boxLeft + ballRadius,
-        Math.min(boxRight - ballRadius, this.game.mouseX)
+        boxLeft + wallThickness + ballRadius,
+        Math.min(boxRight - wallThickness - ballRadius, this.game.mouseX)
       )
 
       // Y座標は固定（初期位置を維持）
