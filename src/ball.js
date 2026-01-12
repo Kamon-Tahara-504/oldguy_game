@@ -37,6 +37,11 @@ export class Ball {
       frictionAir: 0.02,  // 空気抵抗（適度な抵抗、振動を早く止める）
       gravityScale: 0,    // 初期状態では重力を無効化
       density: 0.001,     // 密度（軽く感じさせる）
+      collisionFilter: {
+        group: 0,        // グループ0（デフォルト）
+        category: 0x0001, // カテゴリ1
+        mask: 0xFFFF     // すべてのカテゴリと衝突可能（デフォルト）
+      }
     })
 
     // エンジンに追加
@@ -108,6 +113,15 @@ export class Ball {
     this.isAnimating = true
     this.animationStartTime = Date.now()
     
+    // アニメーション中は衝突を無効化
+    this.Matter.Body.set(this.body, {
+      collisionFilter: {
+        group: 0,
+        category: 0x0001,
+        mask: 0x0000  // 衝突を無効化（maskを0に）
+      }
+    })
+    
     // コンテナ全体をアニメーション（白色ボールと画像の両方）
     this.graphics.scale.set(0.3)
     this.graphics.alpha = 0
@@ -138,23 +152,29 @@ export class Ball {
       this.isAnimating = false
       this.graphics.scale.set(1.0)
       this.graphics.alpha = 1.0
+      
+      // 衝突を再有効化
+      this.Matter.Body.set(this.body, {
+        collisionFilter: {
+          group: 0,
+          category: 0x0001,
+          mask: 0xFFFF  // すべてのカテゴリと衝突可能
+        }
+      })
     }
   }
 
   // 更新（位置を同期）
   // 落下中または落下完了後はBodyの位置でGraphicsを制御
-  // 落下前のみGraphicsの位置でBodyを制御
+  // 落下前は物理エンジン更新前に処理されるため、ここでは何もしない
   update() {
     if (this.graphics && this.body) {
-      // 落下前（まだ落下していない状態）のみGraphicsの位置でBodyを制御
+      // 落下前（まだ落下していない状態）は物理エンジン更新前に処理されるため、ここでは何もしない
       if (!this.isFalling && !this.fallComplete) {
-        // 落下前：Graphicsの位置をBodyに反映（静的ボディとして位置を固定）
-        this.Matter.Body.setPosition(this.body, {
-          x: this.graphics.x,
-          y: this.graphics.y
-        })
+        // 物理エンジン更新前に処理されるため、ここでは何もしない
+        return
       } else {
-        // 落下中または落下完了後：Bodyの位置をGraphicsに反映（物理エンジンの動作を妨げない）
+        // 落下中または落下完了後：Bodyの位置をGraphicsに反映
         // Bodyが存在し、位置が有効な場合のみ反映
         if (this.body.position && 
             !isNaN(this.body.position.x) && 

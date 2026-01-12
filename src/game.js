@@ -3,6 +3,7 @@
 import { GameState } from './game/gameState.js'
 import { GameInitializer } from './game/gameInitializer.js'
 import { GameOverChecker } from './game/gameOverChecker.js'
+import { createGround, createWalls } from './physics.js'
 
 export class Game {
   constructor(app, Matter, PIXI) {
@@ -28,9 +29,38 @@ export class Game {
     this.gameOverChecker = new GameOverChecker(this)
 
     // ゲームループ
-    this.app.ticker.add(() => {
+    this.app.ticker.add((ticker) => {
       if (!this.state.isGameOver) {
-        this.Matter.Engine.update(this.engine)
+        // 物理エンジンの更新前に、落下前のボールの位置と速度をリセット
+        if (this.state.currentBall && !this.state.currentBall.isFalling) {
+          const ball = this.state.currentBall
+          // 静的ボディとして確実に設定
+          this.Matter.Body.setStatic(ball.body, true)
+          // Graphicsの位置をBodyに反映
+          this.Matter.Body.setPosition(ball.body, {
+            x: ball.graphics.x,
+            y: ball.graphics.y
+          })
+          // 速度を0にリセット
+          this.Matter.Body.setVelocity(ball.body, { x: 0, y: 0 })
+          this.Matter.Body.setAngularVelocity(ball.body, 0)
+          
+          // アニメーション中は衝突を無効化（念のため）
+          if (ball.isAnimating) {
+            this.Matter.Body.set(ball.body, {
+              collisionFilter: {
+                group: 0,
+                category: 0x0001,
+                mask: 0x0000  // 衝突を無効化
+              }
+            })
+          }
+        }
+        
+        // 物理エンジンを更新（固定のタイムステップを使用）
+        const deltaTime = 1000 / 60 // 60FPSを想定
+        this.Matter.Engine.update(this.engine, deltaTime)
+        
         this.update()
         this.checkGameOver()
       }
@@ -103,6 +133,18 @@ export class Game {
     this.gameConfig.boxTop = boxTop
     this.gameConfig.boxBottom = boxBottom
     this.gameConfig.boxTopY = boxTop
+
+    // 既存の物理オブジェクトを削除
+    if (this.ground) {
+      this.Matter.World.remove(this.engine.world, this.ground)
+    }
+    if (this.walls && this.walls.length > 0) {
+      this.Matter.World.remove(this.engine.world, this.walls)
+    }
+
+    // 地面と壁を再作成
+    this.ground = createGround(this.engine, this.gameConfig, this.Matter)
+    this.walls = createWalls(this.engine, this.gameConfig, this.Matter)
 
     // 描画を更新（箱、壁、地面の描画を再描画）
     this.renderer.boxRenderer.init(this.walls)

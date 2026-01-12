@@ -36,10 +36,16 @@ export const ASCEND_SCORE = 22
 
 // 地面を作成
 export function createGround(engine, config, Matter) {
+  // 箱の幅と中央位置を使用
+  const boxLeft = config.boxLeft || 0
+  const boxRight = config.boxRight || config.width
+  const boxWidth = boxRight - boxLeft
+  const boxCenterX = (boxLeft + boxRight) / 2
+  
   const ground = Matter.Bodies.rectangle(
-    config.width / 2,
+    boxCenterX,        // 箱の中央
     config.groundY,
-    config.width,
+    boxWidth,          // 箱の幅
     20,
     { isStatic: true }
   )
