@@ -175,6 +175,9 @@ export class Game {
     // 雲を更新（パララックス効果）
     this.renderer.updateClouds()
     
+    // 昇天エフェクトを更新
+    this.renderer.updateAscendEffect()
+    
     // UI要素を最前面に配置（ボールより前面に表示）
     this.renderer.ensureUIFront()
     

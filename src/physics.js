@@ -23,12 +23,12 @@ const BASE_RADIUS = 40 // レベル1の基準サイズ
 const SIZE_MULTIPLIER = 1.4 // レベルごとの倍率（合体時に1.4倍になる）
 
 export const BALL_LEVELS = {
-  1: { name: 'Baby', score: 2, color: 0xff6b9d, radius: BASE_RADIUS, imagePath: '/boy1.png', imageOffsetX: 0, imageOffsetY: 0, imageScale: 1.0 },
-  2: { name: 'Child', score: 6, color: 0xffa500, radius: BASE_RADIUS * SIZE_MULTIPLIER, imagePath: '/boy2.png', imageOffsetX: 0, imageOffsetY: 0, imageScale: 1.0 },
-  3: { name: 'Youth', score: 10, color: 0xffff00, radius: BASE_RADIUS * SIZE_MULTIPLIER ** 2, imagePath: '/boy3.png', imageOffsetX: 0, imageOffsetY: 0, imageScale: 1.0 },
-  4: { name: 'Adult', score: 14, color: 0x00ff00, radius: BASE_RADIUS * SIZE_MULTIPLIER ** 3, imagePath: '/boy4.png', imageOffsetX: 0, imageOffsetY: 0, imageScale: 1.0 },
-  5: { name: 'Middle', score: 18, color: 0x0099ff, radius: BASE_RADIUS * SIZE_MULTIPLIER ** 4, imagePath: '/boy5.png', imageOffsetX: 0, imageOffsetY: 0, imageScale: 1.0 },
-  6: { name: 'Elder', score: 20, color: 0x9966ff, radius: BASE_RADIUS * SIZE_MULTIPLIER ** 5, imagePath: '/boy6.png', imageOffsetX: 0, imageOffsetY: 0, imageScale: 1.0 },
+  1: { name: 'Baby', score: 2, color: 0xff6b9d, radius: BASE_RADIUS, imagePath: './assets/boy1.png', imageOffsetX: 0, imageOffsetY: 0, imageScale: 1.0 },
+  2: { name: 'Child', score: 6, color: 0xffa500, radius: BASE_RADIUS * SIZE_MULTIPLIER, imagePath: './assets/boy2.png', imageOffsetX: 0, imageOffsetY: 0, imageScale: 1.0 },
+  3: { name: 'Youth', score: 10, color: 0xffff00, radius: BASE_RADIUS * SIZE_MULTIPLIER ** 2, imagePath: './assets/boy3.png', imageOffsetX: 0, imageOffsetY: 0, imageScale: 1.0 },
+  4: { name: 'Adult', score: 14, color: 0x00ff00, radius: BASE_RADIUS * SIZE_MULTIPLIER ** 3, imagePath: './assets/boy4.png', imageOffsetX: 0, imageOffsetY: 0, imageScale: 1.0 },
+  5: { name: 'Middle', score: 18, color: 0x0099ff, radius: BASE_RADIUS * SIZE_MULTIPLIER ** 4, imagePath: './assets/boy5.png', imageOffsetX: 0, imageOffsetY: 0, imageScale: 1.0 },
+  6: { name: 'Elder', score: 20, color: 0x9966ff, radius: BASE_RADIUS * SIZE_MULTIPLIER ** 5, imagePath: './assets/boy6.png', imageOffsetX: 0, imageOffsetY: 0, imageScale: 1.0 },
 }
 
 // 昇天時の得点

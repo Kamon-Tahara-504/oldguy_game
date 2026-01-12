@@ -124,35 +124,18 @@ export class BallMerger {
     // スコア加算
     this.game.addScore(ASCEND_SCORE)
 
-    // 昇天アニメーション（簡易版：PixiJSのtickerを使用）
-    const ascendSpeed = 5
-    const ascendDuration = 60 // フレーム数
-    let frame = 0
+    // 合体位置を計算（2つのボールの中点）
+    const mergeX = (ball1.body.position.x + ball2.body.position.x) / 2
+    const mergeY = (ball1.body.position.y + ball2.body.position.y) / 2
 
-    const animateAscend = () => {
-      frame++
-      if (frame < ascendDuration) {
-        if (ball1.body && ball2.body) {
-          this.Matter.Body.setPosition(ball1.body, {
-            x: ball1.body.position.x,
-            y: ball1.body.position.y - ascendSpeed
-          })
-          this.Matter.Body.setPosition(ball2.body, {
-            x: ball2.body.position.x,
-            y: ball2.body.position.y - ascendSpeed
-          })
-        }
-      } else {
-        // アニメーション完了後、ボールを破棄
-        this.game.ballManager.removeBall(ball1)
-        this.game.ballManager.removeBall(ball2)
-        // アニメーション終了時にtickerから削除
-        this.game.app.ticker.remove(animateAscend)
-      }
+    // エフェクトレンダラーを使用して昇天エフェクトを開始
+    if (this.game.renderer && this.game.renderer.ascendEffectRenderer) {
+      this.game.renderer.ascendEffectRenderer.startAscend(mergeX, mergeY)
     }
 
-    // アニメーションをtickerに追加
-    this.game.app.ticker.add(animateAscend)
+    // ボールを即座に削除（エフェクトが表示されるため）
+    this.game.ballManager.removeBall(ball1)
+    this.game.ballManager.removeBall(ball2)
   }
 }
 

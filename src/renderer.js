@@ -6,6 +6,7 @@ import { PreviewRenderer } from './renderers/previewRenderer.js'
 import { BoxRenderer } from './renderers/boxRenderer.js'
 import { TrajectoryRenderer } from './renderers/trajectoryRenderer.js'
 import { CloudRenderer } from './renderers/cloudRenderer.js'
+import { AscendEffectRenderer } from './renderers/ascendEffectRenderer.js'
 
 export class Renderer {
   constructor(game, app, PIXI) {
@@ -20,6 +21,7 @@ export class Renderer {
     this.boxRenderer = new BoxRenderer(game, app, PIXI)
     this.trajectoryRenderer = new TrajectoryRenderer(game, app, PIXI)
     this.cloudRenderer = new CloudRenderer(game, app, PIXI)
+    this.ascendEffectRenderer = new AscendEffectRenderer(game, app, PIXI)
   }
 
   // 地面と壁の描画を初期化
@@ -27,6 +29,8 @@ export class Renderer {
     this.boxRenderer.init(walls)
     // 雲を初期化（背景の上に配置される）
     this.cloudRenderer.init()
+    // 昇天エフェクトを初期化
+    this.ascendEffectRenderer.init()
   }
 
   // スコア表示を初期化
@@ -57,6 +61,11 @@ export class Renderer {
   // 雲を更新
   updateClouds() {
     this.cloudRenderer.update()
+  }
+
+  // 昇天エフェクトを更新
+  updateAscendEffect() {
+    this.ascendEffectRenderer.update()
   }
 
   // UI要素を最前面に配置（ボールより前面に表示）
