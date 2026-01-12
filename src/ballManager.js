@@ -1,5 +1,5 @@
 import { Ball } from './ball.js'
-import { BALL_LEVELS } from './physics.js'
+import { BALL_LEVELS, GAME_CONFIG } from './physics.js'
 
 export class BallManager {
   constructor(game, engine, Matter, PIXI) {
@@ -16,14 +16,15 @@ export class BallManager {
     // 現在のマウス位置を使用（最新の位置を反映）
     const levelData = BALL_LEVELS[this.game.nextBallLevel]
     const ballRadius = levelData.radius
-    // マウス位置が箱の範囲内にあることを確認（ボールの半径を考慮）
+    // マウス位置が箱の範囲内にあることを確認（ボールの半径と壁の厚さを考慮）
     const boxLeft = this.game.gameConfig.boxLeft
     const boxRight = this.game.gameConfig.boxRight
-    // ボールが箱の範囲内に収まるように制限
+    const wallThickness = GAME_CONFIG.WALL_THICKNESS
+    // ボールが箱の範囲内に収まり、壁に触れないように制限
     const clampedMouseX = Math.max(
-      boxLeft + ballRadius,
+      boxLeft + wallThickness + ballRadius,
       Math.min(
-        boxRight - ballRadius,
+        boxRight - wallThickness - ballRadius,
         this.game.mouseX || (boxLeft + boxRight) / 2
       )
     )
@@ -79,14 +80,15 @@ export class BallManager {
     }
 
     // 最新のマウス位置でGraphicsを更新（念のため）
-    // 箱の範囲内に収まるように調整（ボールの半径を考慮）
+    // 箱の範囲内に収まるように調整（ボールの半径と壁の厚さを考慮）
     const boxLeft = this.game.gameConfig.boxLeft
     const boxRight = this.game.gameConfig.boxRight
     const ballRadius = this.game.currentBall.radius
-    // ボールが箱の範囲内に収まるように制限
+    const wallThickness = GAME_CONFIG.WALL_THICKNESS
+    // ボールが箱の範囲内に収まり、壁に触れないように制限
     const xClamped = Math.max(
-      boxLeft + ballRadius,
-      Math.min(boxRight - ballRadius, this.game.mouseX)
+      boxLeft + wallThickness + ballRadius,
+      Math.min(boxRight - wallThickness - ballRadius, this.game.mouseX)
     )
     // ボールの位置を箱の上端より上（箱の外）に設定
     const boxTop = this.game.gameConfig.boxTop || 100

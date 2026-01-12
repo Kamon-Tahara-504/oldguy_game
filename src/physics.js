@@ -14,6 +14,8 @@ export const GAME_CONFIG = {
   // 固定箱サイズ（画面サイズに関わらず同じサイズ）
   BOX_WIDTH: 1200,  // 箱の幅（固定）
   BOX_HEIGHT: 800, // 箱の高さ（固定）
+  // 壁の設定
+  WALL_THICKNESS: 20, // 壁の厚さ
 }
 
 // ボールレベルの定義
@@ -47,7 +49,7 @@ export function createGround(engine, config, Matter) {
 
 // 壁を作成（左右）
 export function createWalls(engine, config, Matter) {
-  const wallThickness = 20
+  const wallThickness = GAME_CONFIG.WALL_THICKNESS
   const walls = []
 
   // 箱の範囲を取得
