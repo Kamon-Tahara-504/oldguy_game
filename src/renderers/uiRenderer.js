@@ -60,6 +60,9 @@ export class UIRenderer {
     this.scoreContainer.x = panelX
     this.scoreContainer.y = panelY
     this.app.stage.addChild(this.scoreContainer)
+    
+    // スコア表示を最前面に配置（ボールより前面に表示）
+    this.app.stage.setChildIndex(this.scoreContainer, this.app.stage.children.length - 1)
   }
 
   // スコア表示を更新
@@ -70,6 +73,11 @@ export class UIRenderer {
     // ハイスコアも更新
     if (this.highScoreText) {
       this.highScoreText.text = `High: ${this.game.highScore}`
+    }
+    
+    // スコア表示を最前面に配置（ボールより前面に表示）
+    if (this.scoreContainer && this.scoreContainer.parent) {
+      this.app.stage.setChildIndex(this.scoreContainer, this.app.stage.children.length - 1)
     }
   }
 }
