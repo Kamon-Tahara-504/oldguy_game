@@ -88,6 +88,9 @@ export class GameInitializer {
 
     // 次のボールプレビュー
     this.game.renderer.updatePreview()
+
+    // ゲーム開始時にタイマーを開始
+    this.game.state.startGame()
   }
 
   setupEventListeners() {

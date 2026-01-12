@@ -45,6 +45,9 @@ export class GameRestart {
     
     // 最初のボールを生成
     this.game.ballManager.createNextBall()
+
+    // ゲーム開始時にタイマーを開始
+    this.game.state.startGame()
   }
 }
 

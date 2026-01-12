@@ -77,6 +77,15 @@ export class GameUpdater {
   }
 
   /**
+   * UIを更新（スコア、時間表示など）
+   * @param {Object} game - ゲームオブジェクト（rendererを含む）
+   */
+  static updateUI(game) {
+    // UI表示を更新（スコア、時間表示など）
+    game.renderer.updateScore()
+  }
+
+  /**
    * すべての更新処理を実行
    * @param {Object} game - ゲームオブジェクト
    */
@@ -85,6 +94,9 @@ export class GameUpdater {
     this.updateCurrentBall(game)
     this.updateTrajectory(game)
     this.updateEffects(game)
+    
+    // UIを更新（毎フレーム更新されるため、時間表示も更新される）
+    this.updateUI(game)
     
     // UI要素を最前面に配置（ボールより前面に表示）
     game.renderer.ensureUIFront()
