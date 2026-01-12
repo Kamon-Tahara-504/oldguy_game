@@ -50,7 +50,10 @@ export class InputHandler {
     this.game.mouseY = e.clientY - rect.top
     
     // マウスアップでも落下開始（クールダウンチェック付き）
-    if (this.game.currentBall && !this.game.currentBall.isFalling && !this.game.isGameOver) {
+    if (this.game.currentBall && 
+        !this.game.currentBall.isFalling && 
+        !this.game.isGameOver &&
+        !this.game.currentBall.isAnimating) { // アニメーション中は無効化
       this.game.ballManager.startBallFall()
     }
   }
