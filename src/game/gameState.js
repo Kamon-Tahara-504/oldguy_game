@@ -14,7 +14,7 @@ export class GameState {
     // ハイスコアをlocalStorageから読み込み
     this.highScore = loadHighScore()
     this.lastBallDropTime = 0
-    this.ballDropCooldown = 1000 // 1秒
+    this.ballDropCooldown = 400 // 400ms（アニメーション時間と統一）
   }
 
   // スコアを追加

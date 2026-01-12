@@ -67,7 +67,12 @@ export class BallManager {
   startBallFall() {
     if (!this.game.currentBall || this.game.currentBall.isFalling || this.game.isGameOver) return
 
-    // クールダウンチェック（1秒に1回のみ）
+    // アニメーション中は投下を無効化
+    if (this.game.currentBall.isAnimating) {
+      return
+    }
+
+    // クールダウンチェック（400msに1回のみ）
     const currentTime = Date.now()
     if (currentTime - this.game.lastBallDropTime < this.game.ballDropCooldown) {
       return // クールダウン中は何もしない
