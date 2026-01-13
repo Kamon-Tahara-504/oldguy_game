@@ -1,3 +1,7 @@
+import { GAME_CONFIG } from '../physics.js'
+import { WallCollisionResolver } from './wallCollisionResolver.js'
+import { BallCollisionResolver } from './ballCollisionResolver.js'
+
 export class PositionResolver {
   constructor(game, Matter) {
     this.game = game
